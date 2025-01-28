@@ -1,5 +1,5 @@
 <!-- layouts/empty.vue -->
-<template>
+<template style="overflow: hidden;">
   <div>
     <Nuxt />
   </div>

@@ -1,29 +1,29 @@
 <template>
   <v-container fluid>
-    <v-row>
-      <v-col cols="12" class="login-title">
+    <v-row
+      class="login-center"
+    >
+      <v-col cols="12">
         <h1 align="center" justify="center">
           SISTEMA DE GESTIÓN DE ACTIVIDADES FORMATIVAS
         </h1>
       </v-col>
-    </v-row>
 
-    <v-row>
-      <v-col cols="12">
+      <v-col cols="12" align="center" justify="center">
         <v-card
           align="center"
           justify="center"
-          dark
-          flat
           class="login-card"
+          flat
+          max-width="400"
         >
           <v-card-text style="padding-bottom: 0;">
-            <h1>
+            <h1 style="color: white;">
               Iniciar Sesión
             </h1>
           </v-card-text>
           <v-card-text>
-            <h4>
+            <h4 style="color: white;">
               Introduce tus credenciales institucionales
             </h4>
           </v-card-text>
@@ -33,18 +33,26 @@
               v-model="valid"
               lazy-validation
             >
-              <h3>Correo</h3>
+              <h3 style="color: white;">
+                Correo
+              </h3>
               <v-text-field
                 v-model="email"
+                flat
+                solo
                 outlined
                 dense
                 type="email"
                 required
               />
 
-              <h3>Contraseña</h3>
+              <h3 style="color: white;">
+                Contraseña
+              </h3>
               <v-text-field
                 v-model="password"
+                flat
+                solo
                 outlined
                 dense
                 type="password"
@@ -53,10 +61,10 @@
               <v-btn
                 color="#fed55e"
                 rounded
-                text
                 elevation="0"
+                @click="login()"
               >
-                <span class="text">Iniciar Sesión</span>
+                <strong>Iniciar Sesión</strong>
               </v-btn>
             </v-form>
           </v-card-text>
@@ -68,24 +76,37 @@
 
 <script>
 export default {
-  layout: 'empty'
+  layout: 'empty',
+
+  data () {
+    return {
+      email: '',
+      password: '',
+      valid: true
+    }
+  },
+
+  methods: {
+    login () {
+      if (this.valid) {
+        this.$router.push('/periods')
+      }
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
-.login-title {
-  position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.login-card {
-  padding: 20px;
-  border-radius: 20px;
+.login-center {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.login-card {
+  background-color: #07538a;
+  padding: 20px;
+  border-radius: 20px;
 }
 </style>
