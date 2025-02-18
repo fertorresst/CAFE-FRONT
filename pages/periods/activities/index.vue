@@ -106,12 +106,11 @@
                     </v-row>
                   </v-col>
 
-                  <!-- <h3>
+                  <h3>
                     PONENTE O EXPOSITOR
-                  </h3> -->
+                  </h3>
                   <v-text-field
                     v-model="alumActivity.speaker"
-                    label="PONENTE O EXPOSITOR"
                     flat
                     outlined
                     dense
@@ -119,12 +118,11 @@
                     required
                   />
 
-                  <!-- <h3>
+                  <h3>
                     DESCRIPCIÓN DE LA ACTIVIDAD
-                  </h3> -->
+                  </h3>
                   <v-textarea
                     v-model="alumActivity.description"
-                    label="DESCRIPCIÓN DE LA ACTIVIDAD"
                     auto-grow
                     rows="3"
                     flat
@@ -136,12 +134,11 @@
 
                   <v-row align="center" justify="center">
                     <v-col cols="3">
-                      <!-- <h3>
+                      <h3>
                         FECHA DE INICIO
-                      </h3> -->
+                      </h3>
                       <v-text-field
                         v-model="alumActivity.startDate"
-                        label="FECHA DE INICIO"
                         flat
                         outlined
                         dense
@@ -151,12 +148,11 @@
                     </v-col>
 
                     <v-col cols="3">
-                      <!-- <h3>
+                      <h3>
                         FECHA DE TERMINO
-                      </h3> -->
+                      </h3>
                       <v-text-field
                         v-model="alumActivity.endDate"
-                        label="FECHA DE TERMINO"
                         flat
                         outlined
                         dense
@@ -166,12 +162,11 @@
                     </v-col>
 
                     <v-col cols="3">
-                      <!-- <h3>
+                      <h3>
                         NÚMERO DE HORAS
-                      </h3> -->
+                      </h3>
                       <v-text-field
                         v-model="alumActivity.hours"
-                        label="NÚMERO DE HORAS"
                         flat
                         outlined
                         dense
@@ -181,13 +176,12 @@
                     </v-col>
 
                     <v-col cols="3">
-                      <!-- <h3>
-                        SUBAREA DE LA ACTIVIDAD
-                      </h3> -->
+                      <h3>
+                        SUBAREA
+                      </h3>
                       <v-combobox
                         v-model="alumActivity.area"
                         :items="areas"
-                        label="SUBAREA DE LA ACTIVIDAD"
                         flat
                         outlined
                         dense
@@ -346,5 +340,33 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+::v-deep .v-data-table {
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  font-family: 'Gandhi Sans', sans-serif !important;
+}
 
+::v-deep .v-data-table-header {
+  background-color: #a3915f !important;
+  border-radius: 20px !important;
+  font-family: 'Novecento Wide', sans-serif !important;
+}
+
+::v-deep .v-data-table-header th {
+  color: white !important;
+  font-family: 'Novecento Wide', sans-serif !important;
+  font-size: 14px !important;
+}
+
+::v-deep .v-data-table-header th.sortable {
+  color: white !important;
+}
+
+::v-deep .v-expansion-panel-header__icon .v-icon {
+  color: white !important;
+}
+
+::v-deep .v-data-table tbody td {
+  font-family: 'Gandhi Sans', sans-serif !important;
+}
 </style>
