@@ -6,7 +6,6 @@
         :color="color"
         :icon="icon"
         rounded
-        dismissible
         @input="closeAlert"
       >
         {{ mensaje }}

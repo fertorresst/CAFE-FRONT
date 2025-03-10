@@ -4,6 +4,7 @@ export const state = () => ({
   icon: '',
   showAlert: false,
   mensaje: '',
+
   user: {},
   token: null
 })
@@ -34,6 +35,7 @@ export const mutations = {
   modifyIcon (state, icon) {
     state.icon = icon
   },
+
   setUser (state, user) {
     state.user = user
   },

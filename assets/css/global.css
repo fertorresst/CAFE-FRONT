@@ -39,3 +39,33 @@ h1, h2, h3, h4, h5, h6 {
 .text-yellow {
   color: #fed55e;
 }
+
+.v-data-table {
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  font-family: 'Gandhi Sans', sans-serif !important;
+}
+
+.v-data-table-header {
+  background-color: #a3915f !important;
+  border-radius: 20px !important;
+  font-family: 'Novecento Wide', sans-serif !important;
+}
+
+.v-data-table-header th {
+  color: white !important;
+  font-family: 'Novecento Wide', sans-serif !important;
+  font-size: 14px !important;
+}
+
+.v-data-table-header th.sortable {
+  color: white !important;
+}
+
+.v-expansion-panel-header__icon .v-icon {
+  color: white !important;
+}
+
+.v-data-table tbody td {
+  font-family: 'Gandhi Sans', sans-serif !important;
+}
