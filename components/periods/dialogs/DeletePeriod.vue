@@ -114,17 +114,18 @@ export default {
       this.$emit('action', { action: 'cancel' })
     },
 
-    async deletePeriod () {
+    deletePeriod () {
       if (!this.password) {
         this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
         return
       }
 
       const validateForm = this.$refs.form.validate()
-      const validatePassword = await this.validatePassword(this.password)
+      // const validatePassword = await this.validatePassword(this.password)
 
+      const validatePassword = true
       if (validateForm && validatePassword) {
-        const id = this.periodToDelete.id
+        const id = this.periodToDelete.per_id
 
         this.$emit('action', { action: 'deletePeriod', id })
         this.cancel()

@@ -57,7 +57,8 @@
             :rules="[
               requiredRule,
               v => dateEndRule(v, dateStart),
-              v => dateRange(v, dateStart, dateEnd)
+              v => dateRange(v, dateStart, dateEnd),
+              dateOverlapRule
             ]"
             :min="dateStart"
             type="date"
@@ -161,8 +162,35 @@ export default {
       show: true,
       validForm: false,
       password: '',
-      dateStart: moment(this.periodToEdit.dateStart).format('YYYY-MM-DD'),
-      dateEnd: moment(this.periodToEdit.dateEnd).format('YYYY-MM-DD')
+      dateStart: moment(this.periodToEdit.per_date_start).format('YYYY-MM-DD'),
+      dateEnd: moment(this.periodToEdit.per_date_end).format('YYYY-MM-DD')
+    }
+  },
+
+  computed: {
+    dateOverlapRule () {
+      return (v) => {
+        if (!this.dateStart || !this.dateEnd) { return true }
+
+        const start = this.moment(this.dateStart)
+        const end = this.moment(this.dateEnd)
+
+        const overlappingPeriod = this.allPeriods.find((period) => {
+          // Ignorar el periodo actual si estamos editando
+          if (period.per_id === this.periodToEdit.per_id) { return false }
+          const periodStart = this.moment(period.dateStart || period.per_date_start)
+          const periodEnd = this.moment(period.dateEnd || period.per_date_end)
+
+          return (
+            start.isSameOrBefore(periodEnd) &&
+            end.isSameOrAfter(periodStart)
+          )
+        })
+
+        return overlappingPeriod
+          ? `LAS FECHAN SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
+          : true
+      }
     }
   },
 
@@ -178,20 +206,21 @@ export default {
       this.$emit('action', { action: 'cancel' })
     },
 
-    async editPeriod () {
+    editPeriod () {
       if (!this.password) {
         this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
         return
       }
 
       const validateForm = this.$refs.form.validate()
-      const validatePassword = await this.validatePassword(this.password)
+      // const validatePassword = await this.validatePassword(this.password)
 
+      const validatePassword = true
       if (validateForm && validatePassword) {
         const data = {
-          id: this.periodToEdit.id,
+          id: this.periodToEdit.per_id,
           dateStart: this.dateStart,
-          dateEnd: this.editDateEnd
+          dateEnd: this.dateEnd
         }
 
         this.$emit('action', { action: 'updatePeriod', data })

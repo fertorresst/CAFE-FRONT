@@ -69,3 +69,7 @@ h1, h2, h3, h4, h5, h6 {
 .v-data-table tbody td {
   font-family: 'Gandhi Sans', sans-serif !important;
 }
+
+.cursor-pointer tbody tr {
+  cursor: pointer !important;
+}

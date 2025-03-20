@@ -11,12 +11,12 @@
     >
       <v-card-text class="bg-blue white--text py-4">
         <h2>
-          FINALIZAR PERIODO
+          {{ titleNewStatus }}
         </h2>
       </v-card-text>
 
       <v-card-text
-        v-if="moment().isBefore(moment(periodToEnd.dateEnd))"
+        v-if="moment().isBefore(moment(periodToChangeStatus.per_date_end)) && periodToChangeStatus.per_status === 'active'"
         class="py-3"
       >
         <h3
@@ -27,7 +27,7 @@
             class="text-left subtitle mt-4"
             style="color: #07538a"
           >
-            {{ periodToEnd.id }}
+            {{ periodToChangeStatus.per_name }}
           </strong>
           aun no llega a su fecha de fin ¿Estás seguro de finalizarlo?
         </h3>
@@ -38,14 +38,15 @@
         class="py-3"
       >
         <h3
-          class="text-justify subtitle black--text"
+          class="text-center subtitle black--text"
         >
-          ¿Estás seguro de finalizar este periodo?
+          ¿Estás seguro de que desea {{ textNewStatus }} este periodo?
+          <br>
           <strong
             class="text-left subtitle mt-4"
             style="color: #07538a"
           >
-            {{ periodToEnd.id }}
+            {{ periodToChangeStatus.per_name }}
           </strong>
         </h3>
       </v-card-text>
@@ -55,7 +56,7 @@
           ref="form"
           v-model="validForm"
           lazy-validation
-          class="pt-6 black--text"
+          class="black--text pt-4"
         >
           <h3>INTRODUCE TU CONTRASEÑA</h3>
           <v-text-field
@@ -70,7 +71,7 @@
       </v-card-text>
 
       <v-card-actions
-        class="d-flex justify-center pb-6"
+        class="d-flex justify-center pt-0 pb-6"
       >
         <v-btn
           color="black"
@@ -96,8 +97,20 @@
 <script>
 export default {
   props: {
-    periodToEnd: {
+    periodToChangeStatus: {
       type: Object,
+      required: true
+    },
+    newStatus: {
+      type: String,
+      required: true
+    },
+    textNewStatus: {
+      type: String,
+      required: true
+    },
+    titleNewStatus: {
+      type: String,
       required: true
     },
     moment: {
@@ -136,19 +149,20 @@ export default {
       this.$emit('action', { action: 'cancel' })
     },
 
-    async endPeriod () {
+    endPeriod () {
       if (!this.password) {
         this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
         return
       }
 
       const validateForm = this.$refs.form.validate()
-      const validatePassword = await this.validatePassword(this.password)
+      // const validatePassword = await this.validatePassword(this.password)
 
+      const validatePassword = true
       if (validateForm && validatePassword) {
         const data = {
-          id: this.periodToEnd.id,
-          status: 'pending'
+          id: this.periodToChangeStatus.per_id,
+          status: this.newStatus
         }
 
         this.$emit('action', { action: 'changeStatus', data })

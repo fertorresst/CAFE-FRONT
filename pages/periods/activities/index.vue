@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row align="center" justify="center">
       <h1>
-        LISTA DE ACTIVIDADES DEL PERIODO {{ period }}
+        LISTA DE ACTIVIDADES DEL PERIODO {{ period.per_name }}
       </h1>
     </v-row>
 
@@ -230,7 +230,13 @@
 export default {
   data () {
     return {
-      period: '2021-2022',
+      periodId: null,
+      tableOrigin: null,
+      period: {
+        per_id: '',
+        per_name: ''
+      },
+
       areas: ['DP', 'RS', 'CEE', 'FCI', 'AC'],
       footerProps: {
         'items-per-page-text': 'Filas por página',
@@ -325,7 +331,66 @@ export default {
     }
   },
 
+  created () {
+    // Recuperar los parámetros de la URL
+    this.periodId = this.$route.query.periodId
+    console.log('🚀 ~ created ~  this.periodId:', this.periodId)
+    this.tableOrigin = this.$route.query.tableOrigin
+    console.log('🚀 ~ created ~ this.tableOrigin:', this.tableOrigin)
+
+    if (this.periodId) {
+      // Cargar datos específicos para este periodo
+      this.loadActivitiesForPeriod(this.periodId)
+    }
+
+    // Cambiar comportamiento según la tabla de origen
+    if (this.tableOrigin === 'active') {
+      // Comportamiento para periodos activos
+    } else if (this.tableOrigin === 'pending') {
+      // Comportamiento para periodos pendientes
+    } else if (this.tableOrigin === 'ended') {
+      // Comportamiento para periodos finalizados
+    }
+  },
+
+  mounted () {
+    this.getPeriodInfo(this.periodId)
+  },
+
   methods: {
+    mostrarAlerta (color, type, message) {
+      this.$store.commit('modifyAlert', true)
+      this.$store.commit('modifyColor', `${color} lighten-2`)
+      this.$store.commit('modifyIcon', color === 'green' ? 'mdi-check-circle' : 'mdi-close-circle')
+      this.$store.commit('modifyType', type)
+      this.$store.commit('modifyText', message)
+      setTimeout(() => {
+        this.$store.commit('modifyAlert', false)
+      }, 3000)
+    },
+
+    loadActivitiesForPeriod (periodId) {
+      // Implementar la lógica para cargar actividades del periodo
+    },
+
+    getPeriodInfo (periodId) {
+      const url = `/get-period-info/${periodId}`
+      this.$axios.get(url)
+        .then((res) => {
+          if (res.data.success) {
+            // eslint-disable-next-line no-console
+            console.log('🚀 ~ getPeriodInfo ~ res.data', res.data)
+            this.period = res.data.period
+            this.mostrarAlerta('green', 'success', 'INFORMACIÓN DEL PERIODO CARGADA CORRECTAMENTE')
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.error('🚀 ~ getPeriodInfo ~ error', error)
+          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LA INFORMACIÓN DEL PERIODO')
+        })
+    },
+
     loadAlums () {
       this.alumsFlag = true
       this.collectivesFlag = false

@@ -43,7 +43,8 @@
             :rules="[
               requiredRule,
               v => dateEndRule(v, dateStart),
-              v => dateRange(v, dateStart, dateEnd)
+              v => dateRange(v, dateStart, dateEnd),
+              dateOverlapRule
             ]"
             :min="dateStart"
             type="date"
@@ -98,8 +99,6 @@
 </template>
 
 <script>
-import moment from 'moment'
-
 export default {
   props: {
     dateStartRule: {
@@ -126,6 +125,10 @@ export default {
       type: Array,
       required: true
     },
+    adminId: {
+      type: Number,
+      required: true
+    },
     moment: {
       type: Function,
       required: true
@@ -140,6 +143,35 @@ export default {
       exclusive: false,
       dateStart: '',
       dateEnd: ''
+    }
+  },
+
+  computed: {
+    periodName () {
+      return this.periodId
+    },
+
+    dateOverlapRule () {
+      return (v) => {
+        if (!this.dateStart || !this.dateEnd) { return true }
+
+        const start = this.moment(this.dateStart)
+        const end = this.moment(this.dateEnd)
+
+        const overlappingPeriod = this.allPeriods.find((period) => {
+          const periodStart = this.moment(period.dateStart || period.per_date_start)
+          const periodEnd = this.moment(period.dateEnd || period.per_date_end)
+
+          return (
+            start.isSameOrBefore(periodEnd) &&
+            end.isSameOrAfter(periodStart)
+          )
+        })
+
+        return overlappingPeriod
+          ? `LAS FECHAN SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
+          : true
+      }
     }
   },
 
@@ -159,22 +191,57 @@ export default {
   },
 
   methods: {
-    createPeriod () {
-      if (this.validForm) {
-        const period = {
-          id: this.periodId,
-          dateStart: this.dateStart,
-          dateEnd: this.dateEnd,
-          exclusive: this.exclusive,
-          request: 0,
-          approval: 0,
-          rejected: 0,
-          status: 'active'
-        }
+    updatePeriodId () {
+      if (!this.dateStart) { return }
 
-        this.$emit('action', { period, action: 'createPeriod' })
-        this.cancel()
+      const date = this.moment(this.dateStart)
+      const year = date.format('YY')
+      const month = date.month() + 1
+
+      const prefix = month >= 1 && month <= 7 ? 'EJ' : 'AD'
+
+      const baseId = `${prefix}${year}`
+
+      const matchingPeriods = this.allPeriods.filter((p) => {
+        return p.per_name && p.per_name.startsWith(baseId)
+      })
+
+      let maxNumber = 0
+      matchingPeriods.forEach((period) => {
+        const match = period.per_name.match(new RegExp(baseId + '-([0-9]+)'))
+        if (match && match[1]) {
+          const num = parseInt(match[1])
+          if (num > maxNumber) {
+            maxNumber = num
+          }
+        }
+      })
+
+      const newNumber = maxNumber + 1
+
+      this.periodId = `${baseId}-${newNumber}${this.exclusive ? 'E' : ''}`
+    },
+
+    createPeriod () {
+      if (!this.validForm) { return }
+
+      const overlapValidation = this.dateOverlapRule()
+      if (overlapValidation !== true) {
+        this.$emit('show-error', overlapValidation)
+        return
       }
+
+      const period = {
+        name: this.periodId,
+        dateStart: this.dateStart,
+        dateEnd: this.dateEnd,
+        exclusive: this.exclusive,
+        status: 'active',
+        createAdminId: this.adminId
+      }
+
+      this.$emit('action', { period, action: 'createPeriod' })
+      this.cancel()
     },
 
     cancel () {
@@ -187,46 +254,6 @@ export default {
       this.dateStart = ''
       this.dateEnd = ''
       this.$emit('action', { action: 'cancel' })
-    },
-
-    getLastConsecutive () {
-      if (!this.allPeriods || this.allPeriods.length === 0) {
-        return 1
-      }
-
-      const consecutive = this.allPeriods.map((period) => {
-        const match = period.id.match(/-(\d+)/)
-        return match ? parseInt(match[1]) : 0
-      })
-
-      return Math.max(...consecutive) + 1
-    },
-
-    updatePeriodId () {
-      if (!this.dateStart) { return }
-
-      const date = moment(this.dateStart)
-      const month = date.month()
-      const year = date.format('YY')
-      const consecutive = this.getLastConsecutive()
-
-      // Determinar el prefijo según el periodo
-      let prefix = ''
-      if (month >= 0 && month <= 6) {
-        prefix = 'EJ'
-      } else if (month >= 7 && month <= 11) {
-        prefix = 'AD'
-      }
-
-      // Construir el ID base
-      let newId = `${prefix}${year}-${consecutive}`
-
-      // Agregar o quitar la E según exclusividad
-      if (this.exclusive) {
-        newId += 'E'
-      }
-
-      this.periodId = newId
     }
   }
 }

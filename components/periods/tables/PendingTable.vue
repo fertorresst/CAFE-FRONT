@@ -4,22 +4,23 @@
     :items="pendingPeriods"
     class="elevation-0 mt-4"
     :footer-props="footerProps"
+    @click:row="navigateToActivities"
   >
     <!-- Template para fechas -->
-    <template #[`item.dateStart`]="{ item }">
-      {{ moment(item.dateStart).format('DD MMM YY').toUpperCase() }}
+    <template #[`item.per_date_start`]="{ item }">
+      {{ moment(item.per_date_start).format('DD MMM YY').toUpperCase() }}
     </template>
 
-    <template #[`item.dateEnd`]="{ item }">
-      {{ moment(item.dateEnd).format('DD MMM YY').toUpperCase() }}
+    <template #[`item.per_date_end`]="{ item }">
+      {{ moment(item.per_date_end).format('DD MMM YY').toUpperCase() }}
     </template>
 
     <!-- Template para exclusivo -->
-    <template #[`item.exclusive`]="{ item }">
+    <template #[`item.per_exclusive`]="{ item }">
       <v-icon
-        :color="item.exclusive ? 'success' : 'error'"
+        :color="item.per_exclusive ? 'success' : 'error'"
       >
-        {{ item.exclusive ? 'mdi-check-circle' : 'mdi-close-circle' }}
+        {{ item.per_exclusive ? 'mdi-check-circle' : 'mdi-close-circle' }}
       </v-icon>
     </template>
 
@@ -85,6 +86,13 @@ export default {
   methods: {
     emit (item, action) {
       this.$emit('action', { item, action })
+    },
+
+    navigateToActivities (item) {
+      this.$emit('navigate', {
+        periodId: item.per_id,
+        tableOrigin: 'pending'
+      })
     }
   }
 }
