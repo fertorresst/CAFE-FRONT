@@ -23,74 +23,76 @@
     </template>
 
     <template #[`item.actions`]="{ item }">
-      <v-tooltip
-        color="info"
-        bottom
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="info"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'detailsTable')"
-          >
-            mdi-information
-          </v-icon>
-        </template>
-        <span>VER DETALLES</span>
-      </v-tooltip>
+      <div @click.stop>
+        <v-tooltip
+          color="info"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'detailsTable')"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>VER DETALLES</span>
+        </v-tooltip>
 
-      <v-tooltip
-        color="error"
-        bottom
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="error"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'deleteTable')"
-          >
-            mdi-calendar-remove
-          </v-icon>
-        </template>
-        <span>ELIMINAR PERIODO</span>
-      </v-tooltip>
+        <v-tooltip
+          color="error"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="error"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'deleteTable')"
+            >
+              mdi-calendar-remove
+            </v-icon>
+          </template>
+          <span>ELIMINAR PERIODO</span>
+        </v-tooltip>
 
-      <v-tooltip
-        color="info"
-        bottom
-        class="px-4"
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="info"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'editTable')"
-          >
-            mdi-calendar-edit
-          </v-icon>
-        </template>
-        <span>EDITAR PERIODO</span>
-      </v-tooltip>
+        <v-tooltip
+          color="info"
+          bottom
+          class="px-4"
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'editTable')"
+            >
+              mdi-calendar-edit
+            </v-icon>
+          </template>
+          <span>EDITAR PERIODO</span>
+        </v-tooltip>
 
-      <v-tooltip
-        color="success"
-        bottom
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="success"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'finishTable')"
-          >
-            mdi-calendar-check
-          </v-icon>
-        </template>
-        <span>FINALIZAR PERIODO</span>
-      </v-tooltip>
+        <v-tooltip
+          color="success"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="success"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'finishTable')"
+            >
+              mdi-calendar-check
+            </v-icon>
+          </template>
+          <span>FINALIZAR PERIODO</span>
+        </v-tooltip>
+      </div>
     </template>
   </v-data-table>
 </template>

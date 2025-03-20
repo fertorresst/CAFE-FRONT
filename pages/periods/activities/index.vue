@@ -334,9 +334,7 @@ export default {
   created () {
     // Recuperar los parámetros de la URL
     this.periodId = this.$route.query.periodId
-    console.log('🚀 ~ created ~  this.periodId:', this.periodId)
     this.tableOrigin = this.$route.query.tableOrigin
-    console.log('🚀 ~ created ~ this.tableOrigin:', this.tableOrigin)
 
     if (this.periodId) {
       // Cargar datos específicos para este periodo
@@ -378,8 +376,6 @@ export default {
       this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
-            // eslint-disable-next-line no-console
-            console.log('🚀 ~ getPeriodInfo ~ res.data', res.data)
             this.period = res.data.period
             this.mostrarAlerta('green', 'success', 'INFORMACIÓN DEL PERIODO CARGADA CORRECTAMENTE')
           }
