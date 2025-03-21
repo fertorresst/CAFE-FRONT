@@ -25,39 +25,41 @@
     </template>
 
     <template #[`item.actions`]="{ item }">
-      <v-tooltip
-        color="info"
-        bottom
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="info"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'detailsTable')"
-          >
-            mdi-information
-          </v-icon>
-        </template>
-        <span>VER DETALLES</span>
-      </v-tooltip>
+      <div class="d-flex flex-nowrap align-stretch justify-center" @click.stop>
+        <v-tooltip
+          color="info"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'detailsTable')"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>VER DETALLES</span>
+        </v-tooltip>
 
-      <v-tooltip
-        color="success"
-        bottom
-      >
-        <template #activator="{ on, attrs }">
-          <v-icon
-            color="success"
-            v-bind="attrs"
-            v-on="on"
-            @click="emit(item, 'downloadTable')"
-          >
-            mdi-download
-          </v-icon>
-        </template>
-        <span>DESCARGAR REPORTE</span>
-      </v-tooltip>
+        <v-tooltip
+          color="success"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="success"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'downloadTable')"
+            >
+              mdi-download
+            </v-icon>
+          </template>
+          <span>DESCARGAR REPORTE</span>
+        </v-tooltip>
+      </div>
     </template>
   </v-data-table>
 </template>

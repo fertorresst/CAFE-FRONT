@@ -170,7 +170,17 @@ import ActiveTable from '../../components/periods/tables/ActiveTable'
 moment.locale('es')
 
 export default {
-  components: { DetailsPeriod, ChangeStatus, EditPeriod, DeletePeriod, NewPeriod, EndedTable, PendingTable, ActiveTable },
+  components: {
+    DetailsPeriod,
+    ChangeStatus,
+    EditPeriod,
+    DeletePeriod,
+    NewPeriod,
+    EndedTable,
+    PendingTable,
+    ActiveTable
+  },
+
   data () {
     return {
       moment,

@@ -17,16 +17,52 @@
 
       <v-card-text class="py-3">
         <h3
-          class="text-left subtitle black--text"
+          class="text-center subtitle black--text"
         >
-          ¿Estás seguro de que deseas eliminar este periodo?
+          ¿Estás seguro de que deseas eliminar este contacto?
+          <br>
           <strong
-            class="text-left subtitle mt-4"
+            class="subtitle mt-4"
             style="color: #07538a"
           >
-            {{ periodToDelete.id }}
+            {{ contactToDelete.id }} | {{ contactToDelete.user.name }}
           </strong>
         </h3>
+
+        <div class="text-left black--text mt-4">
+          <strong>NUA:</strong>
+          <span>{{ contactToDelete.user.nua }}</span>
+
+          <br>
+          <strong>CORREO:</strong>
+          <span>{{ contactToDelete.user.email }}</span>
+
+          <br>
+
+          <strong>TELÉFONO:</strong>
+          <span>{{ formatPhone(contactToDelete.user.phone) }}</span>
+
+          <br>
+          <br>
+
+          <strong>TIPO DE ACTIVIDAD:</strong>
+          <span>{{ getActivityType(contactToDelete.relatedItem.type) }}</span>
+
+          <br>
+
+          <strong>NOMBRE DE LA ACTIVIDAD:</strong>
+          <span>{{ contactToDelete.relatedItem.name.toUpperCase() }}</span>
+
+          <br>
+
+          <strong v-if="contactToDelete.relatedItem.type === 'activity'">DESCRIPCIÓN DE LA ACTIVIDAD:</strong>
+          <span v-if="contactToDelete.relatedItem.type === 'activity'">{{ contactToDelete.relatedItem.description.toUpperCase() }}</span>
+
+          <br>
+
+          <strong>MOTIVO DEL CONTACTO:</strong>
+          <span>{{ contactToDelete.description.toUpperCase() }}</span>
+        </div>
 
         <v-form
           ref="form"
@@ -47,7 +83,7 @@
         <h3
           class="text-left subtitle black--text"
         >
-          Esta acción no se puede deshacer.
+          *Esta acción no se puede deshacer.
         </h3>
       </v-card-text>
 
@@ -66,7 +102,7 @@
           color="#fed55e"
           rounded
           elevation="0"
-          @click="deletePeriod()"
+          @click="deleteContact()"
         >
           <strong>ELIMINAR</strong>
         </v-btn>
@@ -78,7 +114,7 @@
 <script>
 export default {
   props: {
-    periodToDelete: {
+    contactToDelete: {
       type: Object,
       required: true
     },
@@ -105,6 +141,30 @@ export default {
   },
 
   methods: {
+    formatPhone (phone) {
+      return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')
+    },
+
+    getStatusText (status) {
+      const statusMap = {
+        pending: 'PENDIENTE',
+        in_progress: 'CONTACTADO',
+        resolved: 'RESUELTO',
+        cancelled: 'CANCELADO'
+      }
+
+      return statusMap[status] || status
+    },
+
+    getActivityType (type) {
+      const typeMap = {
+        collective: 'ACTIVIDAD COLECTIVA',
+        activity: 'ACTIVIDAD INDIVIDUAL'
+      }
+
+      return typeMap[type] || type
+    },
+
     cancel () {
       if (this.$refs.form) {
         this.$refs.form.reset()
@@ -114,20 +174,19 @@ export default {
       this.$emit('action', { action: 'cancel' })
     },
 
-    deletePeriod () {
+    async deleteContact () {
       if (!this.password) {
         this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
         return
       }
 
       const validateForm = this.$refs.form.validate()
-      // const validatePassword = await this.validatePassword(this.password)
+      const validatePassword = await this.validatePassword(this.password)
 
-      const validatePassword = true
       if (validateForm && validatePassword) {
-        const id = this.periodToDelete.per_id
+        const id = this.contactToDelete.id
 
-        this.$emit('action', { action: 'deletePeriod', id })
+        this.$emit('action', { action: 'deleteContact', id })
         this.cancel()
       }
     }

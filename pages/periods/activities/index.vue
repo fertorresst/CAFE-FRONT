@@ -27,21 +27,12 @@
     </v-row>
 
     <v-row class="my-8">
-      <v-col cols="12" align="center" justify="center">
-        <v-card class="elevation-0">
-          <v-card-text class="black--text">
-            <h2>ALUMNOS PENDIENTES DE CONTACTAR</h2>
-          </v-card-text>
-          <v-card-text>
-            <v-data-table
-              :headers="headersContact"
-              :items="alumsContact"
-              class="elevation-0"
-              :footer-props="footerProps"
-            />
-          </v-card-text>
-        </v-card>
-      </v-col>
+      <contact-table
+        :user-contact="userContact"
+        :headers-contact="headersContact"
+        :footer-props="footerProps"
+        @action="decoder"
+      />
     </v-row>
 
     <v-row align="center" justify="center">
@@ -223,37 +214,92 @@
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
+
+    <contact-info-dialog
+      v-if="dialogInfoContact"
+      :contact-to-info="contactToInfo"
+      :moment="moment"
+      @action="decoder"
+    />
+
+    <contact-delete-dialog
+      v-if="dialogDeleteContact"
+      :contact-to-delete="contactToDelete"
+      :required-rule="requiredRule"
+      :validate-password="validatePassword"
+      :mostrar-alerta="mostrarAlerta"
+      @action="decoder"
+    />
+
+    <contact-update-dialog
+      v-if="dialogUpdateContact"
+      :contact-to-update="contactToUpdate"
+      :required-rule="requiredRule"
+      :validate-password="validatePassword"
+      :mostrar-alerta="mostrarAlerta"
+      @action="decoder"
+    />
   </v-col>
 </template>
 
 <script>
+import moment from 'moment'
+import ContactUpdateDialog from '../../../components/activities/dialogs/ContactUpdateDialog'
+import ContactDeleteDialog from '../../../components/activities/dialogs/ContactDeleteDialog'
+
+import ContactInfoDialog from '../../../components/activities/dialogs/ContactInfoDialog'
+import ContactTable from '../../../components/activities/tables/ContactTable'
+
+moment.locale('es')
+
 export default {
+  components: { ContactUpdateDialog, ContactDeleteDialog, ContactInfoDialog, ContactTable },
+
   data () {
     return {
-      periodId: null,
-      tableOrigin: null,
-      period: {
-        per_id: '',
-        per_name: ''
-      },
+      moment,
 
+      // DATOS DE ENTRADA
+      periodId: '',
+      tableOrigin: '',
+      period: {},
+
+      panel: 0,
       areas: ['DP', 'RS', 'CEE', 'FCI', 'AC'],
+
+      // VARIABLE DE TABLAS
       footerProps: {
-        'items-per-page-text': 'Filas por página',
+        'items-per-page-text': 'FILAS POR PÁGINA',
         'items-per-page-options': [5, 10, 15, 20, 25, 50, 100]
       },
+
+      // TABLA DE CONTACTOS
       headersContact: [
-        { text: 'NUA', align: 'center', value: 'nua', sortable: false },
-        { text: 'NOMBRE', align: 'center', value: 'name', sortable: false },
-        { text: 'CORREO', align: 'center', value: 'email', sortable: false },
-        { text: 'TELÉFONO', align: 'center', value: 'phone', sortable: false },
+        { text: 'ID', align: 'left', value: 'id', sortable: false },
+        { text: 'NUA', align: 'left', value: 'user.nua', sortable: true },
+        { text: 'NOMBRE', align: 'left', value: 'user.name', sortable: false },
+        { text: 'DESCRIPCIÓN DEL CONTACTO', align: 'left', value: 'description', sortable: false },
+        { text: 'ESTADO', align: 'center', value: 'status', sortable: true },
         { text: 'ACCIONES', align: 'center', value: 'actions', sortable: false }
       ],
-      alumsContact: [
-        { nua: '123456', name: 'Juan Pérez', email: 'j@j.com', phone: '1234567890' },
-        { nua: '123456', name: 'Juan Pérez', email: 'j@j.com', phone: '1234567890' }
-      ],
+      userContact: [],
 
+      // REGLAS
+      requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
+
+      // DIALOG INFO CONTACTO
+      dialogInfoContact: false,
+      contactToInfo: [],
+
+      // DIALOG DELETE CONTACT
+      dialogDeleteContact: false,
+      contactToDelete: [],
+
+      // DIALOG UPDATE CONTACT
+      dialogUpdateContact: false,
+      contactToUpdate: [],
+
+      // VARIABLE QUE NO SE QUE PEDO
       alumsFlag: false,
       collectivesFlag: false,
 
@@ -332,27 +378,15 @@ export default {
   },
 
   created () {
-    // Recuperar los parámetros de la URL
     this.periodId = this.$route.query.periodId
     this.tableOrigin = this.$route.query.tableOrigin
 
-    if (this.periodId) {
-      // Cargar datos específicos para este periodo
-      this.loadActivitiesForPeriod(this.periodId)
+    if (!this.periodId || !this.tableOrigin) {
+      this.$router.push({ name: 'periods' })
+    } else {
+      this.getPeriodInfo(this.periodId)
+      this.getUserContact(this.periodId)
     }
-
-    // Cambiar comportamiento según la tabla de origen
-    if (this.tableOrigin === 'active') {
-      // Comportamiento para periodos activos
-    } else if (this.tableOrigin === 'pending') {
-      // Comportamiento para periodos pendientes
-    } else if (this.tableOrigin === 'ended') {
-      // Comportamiento para periodos finalizados
-    }
-  },
-
-  mounted () {
-    this.getPeriodInfo(this.periodId)
   },
 
   methods: {
@@ -367,13 +401,68 @@ export default {
       }, 3000)
     },
 
-    loadActivitiesForPeriod (periodId) {
-      // Implementar la lógica para cargar actividades del periodo
+    // EMITS DE LOS COMPONENTES
+    decoder (data) {
+      if (data.action === 'cancel') {
+        this.cancel()
+      } else if (data.action === 'deleteContactTable') {
+        this.deleteContactDialog(data.item)
+      } else if (data.action === 'infoContactTable') {
+        this.infoContactDialog(data.item)
+      } else if (data.action === 'updateContactTable') {
+        this.updateContactDialog(data.item)
+      } else if (data.action === 'deleteContact') {
+        this.deleteContact(data.id)
+      } else if (data.action === 'updateContact') {
+        this.updateContact(data.data)
+      }
     },
 
-    getPeriodInfo (periodId) {
+    // VALIDAR CONTRASEÑA
+    async validatePassword (password) {
+      try {
+        const url = '/validate-password'
+        const data = {
+          user: this.$store.state.user,
+          password
+        }
+        const res = await this.$axios.post(url, data)
+
+        if (res.data.success) {
+          return res.data.success
+        }
+
+        this.mostrarAlerta('red', 'error', res.data.message)
+        return false
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL VALIDAR LA CONTRASEÑA')
+        // eslint-disable-next-line no-console
+        console.error('Error:', error)
+        return false
+      }
+    },
+
+    // REINICIAR LAS VARIABLES
+    clean () {
+      // DIALOGS
+      this.dialogInfoContact = false
+      this.dialogDeleteContact = false
+      this.dialogUpdateContact = false
+
+      // VARIABLES
+      this.contactToInfo = []
+      this.contactToDelete = []
+      this.contactToUpdate = []
+    },
+
+    cancel () {
+      this.clean()
+    },
+
+    // CARGAR INFORMACIÓN DEL PERIODO
+    async getPeriodInfo (periodId) {
       const url = `/get-period-info/${periodId}`
-      this.$axios.get(url)
+      await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
             this.period = res.data.period
@@ -384,6 +473,77 @@ export default {
           // eslint-disable-next-line no-console
           console.error('🚀 ~ getPeriodInfo ~ error', error)
           this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LA INFORMACIÓN DEL PERIODO')
+        })
+    },
+
+    // CARGAR USUARIOS A CONTACTAR
+    async getUserContact (periodId) {
+      const url = `/get-contacts-by-period/${periodId}`
+      await this.$axios.get(url)
+        .then((res) => {
+          if (res.data.success) {
+            this.userContact = res.data.contacts
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.error('🚀 ~ getUserContact ~ error', error)
+          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LOS USUARIOS A CONTACTAR')
+        })
+    },
+
+    // DIALOG INFO CONTACTO
+    infoContactDialog (item) {
+      this.contactToInfo = item
+      this.dialogInfoContact = true
+    },
+
+    // DIALOG DELETE CONTACT
+    deleteContactDialog (item) {
+      this.contactToDelete = item
+      this.dialogDeleteContact = true
+    },
+
+    async deleteContact (params) {
+      const url = `/delete-contact-by-id/${params}`
+      await this.$axios.delete(url)
+        .then((res) => {
+          if (res.data.success) {
+            this.mostrarAlerta('green', 'success', res.data.message)
+            this.getUserContact(this.periodId)
+          } else {
+            this.mostrarAlerta('red', 'error', res.data.message)
+          }
+        })
+        .catch((e) => {
+          this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL ELIMINAR EL CONTACTO')
+          // eslint-disable-next-line no-console
+          console.log('🚀 ~ deleteContact ~ e: ', e)
+        })
+    },
+
+    // DIALOG UPDATE CONTACT
+    updateContactDialog (item) {
+      this.contactToUpdate = item
+      this.dialogUpdateContact = true
+    },
+
+    updateContact (data) {
+      console.log('🚀 ~ updateContact ~ data:', data)
+      const url = '/update-contact'
+      this.$axios.patch(url, data)
+        .then((res) => {
+          if (res.data.success) {
+            this.mostrarAlerta('green', 'success', res.data.message)
+            this.getUserContact(this.periodId)
+          } else {
+            this.mostrarAlerta('red', 'error', res.data.message)
+          }
+        })
+        .catch((e) => {
+          this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
+          // eslint-disable-next-line no-console
+          console.log('🚀 ~ updateContact ~ e: ', e)
         })
     },
 

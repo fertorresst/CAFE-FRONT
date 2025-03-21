@@ -23,7 +23,7 @@
     </template>
 
     <template #[`item.actions`]="{ item }">
-      <div @click.stop>
+      <div class="d-flex flex-nowrap align-stretch justify-center" @click.stop>
         <v-tooltip
           color="info"
           bottom
