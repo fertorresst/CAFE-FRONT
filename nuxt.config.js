@@ -75,12 +75,12 @@ export default {
 
   googleFonts: {
     families: {
-      Roboto: true, // Fuente Roboto
-      'Open+Sans': true, // Fuente Open Sans
-      'Novecento+Wide': true, // Fuente Novecento Wide
-      Raleway: true, // Fuente Raleway
-      'Gandhi+Sans': true // Fuente Gandhi Sans
-      // Puedes agregar más fuentes aquí
+      Roboto: true,
+      'Open+Sans': true,
+      'Novecento+Wide': true,
+      Raleway: true,
+      'Gandhi+Sans': true,
+      Montserrat: [400, 500, 600, 700]
     }
   },
 

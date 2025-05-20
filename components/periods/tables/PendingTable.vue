@@ -2,7 +2,7 @@
   <v-data-table
     :headers="headersPendingPeriods"
     :items="pendingPeriods"
-    class="elevation-0 mt-4"
+    class="elevation-0 mt-4 cursor-pointer"
     :footer-props="footerProps"
     @click:row="navigateToActivities"
   >

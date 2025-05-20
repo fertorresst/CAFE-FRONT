@@ -5,7 +5,23 @@
         <h4>ALUMNOS PENDIENTES DE CONTACTAR</h4>
       </v-expansion-panel-header>
       <v-expansion-panel-content>
-        <v-card-text>
+        <h5
+          v-if="tableOrigin === 'active'"
+          class="subtitle mt-4"
+        >
+          LA TABLA DE CONTACTOS PENDIENTES NO ESTA DISPONIBLE PARA PERIODOS ACTIVOS. ES NECESARIO MARCAR EL PERIODO COMO 'PENDIENTE DE REVISIÓN' PARA PODER ACTIVAR ESTA FUNCIÓN
+        </h5>
+
+        <h5
+          v-else-if="userContact.length === 0"
+          class="subtitle mt-4"
+        >
+          NO HAY ALUMNOS PENDIENTES DE CONTACTAR
+        </h5>
+
+        <v-card-text
+          v-else-if="userContact && tableOrigin !== 'active'"
+        >
           <v-data-table
             :headers="headersContact"
             :items="userContact"
@@ -31,6 +47,7 @@
                 <v-icon
                   v-if="item.status === 'resolved'"
                   color="success"
+                  small
                 >
                   mdi-check-circle
                 </v-icon>
@@ -38,6 +55,7 @@
                 <v-icon
                   v-else-if="item.status === 'cancelled'"
                   color="error"
+                  small
                 >
                   mdi-close-circle
                 </v-icon>
@@ -45,6 +63,7 @@
                 <v-icon
                   v-else-if="item.status === 'in_progress'"
                   color="warning"
+                  small
                 >
                   mdi-progress-clock
                 </v-icon>
@@ -52,6 +71,7 @@
                 <v-icon
                   v-else-if="item.status === 'pending'"
                   color="grey"
+                  small
                 >
                   mdi-alert-circle
                 </v-icon>
@@ -142,6 +162,10 @@ export default {
     },
     headersContact: {
       type: Array,
+      required: true
+    },
+    tableOrigin: {
+      type: String,
       required: true
     },
     footerProps: {

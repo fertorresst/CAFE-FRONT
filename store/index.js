@@ -5,7 +5,9 @@ export const state = () => ({
   showAlert: false,
   mensaje: '',
 
-  user: {},
+  user: {
+    id: 1
+  },
   token: null
 })
 

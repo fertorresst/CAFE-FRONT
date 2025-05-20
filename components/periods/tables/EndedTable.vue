@@ -2,7 +2,7 @@
   <v-data-table
     :headers="headersEndedPeriods"
     :items="endedPeriods"
-    class="elevation-0 mt-4"
+    class="elevation-0 mt-4 cursor-pointer"
     :footer-props="footerProps"
     @click:row="navigateToActivities"
   >

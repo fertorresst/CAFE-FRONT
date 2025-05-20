@@ -1,15 +1,15 @@
 <template>
   <v-col cols="12">
     <v-row align="center" justify="center">
-      <h1>
-        PERIODOS
+      <h1 class="my-5">
+        LISTA DE PERIODOS
       </h1>
     </v-row>
 
     <v-row align="center" justify="center">
       <v-btn
         elevation="0"
-        class="rounded-pill my-6"
+        class="rounded-pill mb-4"
         color="#fed55e"
         @click="openNewPeriod()"
       >
@@ -159,14 +159,14 @@
 <script>
 import moment from 'moment'
 import { mapState } from 'vuex'
-import DetailsPeriod from '../../components/periods/dialogs/DetailsPeriod'
-import ChangeStatus from '../../components/periods/dialogs/ChangeStatus'
-import EditPeriod from '../../components/periods/dialogs/EditPeriod'
-import DeletePeriod from '../../components/periods/dialogs/DeletePeriod'
-import NewPeriod from '../../components/periods/dialogs/NewPeriod'
-import EndedTable from '../../components/periods/tables/EndedTable'
-import PendingTable from '../../components/periods/tables/PendingTable'
-import ActiveTable from '../../components/periods/tables/ActiveTable'
+import DetailsPeriod from '../../../components/periods/dialogs/DetailsPeriod'
+import ChangeStatus from '../../../components/periods/dialogs/ChangeStatus'
+import EditPeriod from '../../../components/periods/dialogs/EditPeriod'
+import DeletePeriod from '../../../components/periods/dialogs/DeletePeriod'
+import NewPeriod from '../../../components/periods/dialogs/NewPeriod'
+import EndedTable from '../../../components/periods/tables/EndedTable'
+import PendingTable from '../../../components/periods/tables/PendingTable'
+import ActiveTable from '../../../components/periods/tables/ActiveTable'
 moment.locale('es')
 
 export default {
@@ -376,7 +376,7 @@ export default {
 
     navigateToActivities (data) {
       this.$router.push({
-        path: '/periods/activities',
+        path: '/admin/periods/activities',
         query: {
           periodId: data.periodId,
           tableOrigin: data.tableOrigin

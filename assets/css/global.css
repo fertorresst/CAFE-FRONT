@@ -1,11 +1,15 @@
 /* Estilos globales */
 body {
   background-color: #fff6dc!important;
-  font-family: 'Gandhi Sans', sans-serif;
+  font-family: 'Gandhi Sans', sans-serif !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Novecento Wide', sans-serif;
+}
+
+span, strong {
+  font-family: 'Gandhi Sans', sans-serif;
 }
 
 .subtitle {

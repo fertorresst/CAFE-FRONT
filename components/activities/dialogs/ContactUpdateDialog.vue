@@ -60,7 +60,7 @@
           <br>
 
           <strong v-if="contactToUpdate.relatedItem.type === 'activity'">DESCRIPCIÓN DE LA ACTIVIDAD:</strong>
-          <span v-if="contactToUpdate.relatedItem.type === 'activity'">{{ contactToDelete.relatedItem.description.toUpperCase() }}</span>
+          <span v-if="contactToUpdate.relatedItem.type === 'activity'">{{ contactToUpdate.relatedItem.description.toUpperCase() }}</span>
 
           <br>
 

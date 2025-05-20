@@ -89,7 +89,7 @@ export default {
   methods: {
     login () {
       if (this.valid) {
-        this.$router.push('/periods')
+        this.$router.push('/admin/periods')
       }
     }
   }

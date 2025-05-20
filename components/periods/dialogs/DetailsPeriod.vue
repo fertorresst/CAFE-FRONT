@@ -106,7 +106,6 @@
               class="black--text"
             >
               <tr>
-                <th class="text-center" />
                 <th class="text-center">
                   DP
                 </th>
@@ -122,84 +121,36 @@
                 <th class="text-center">
                   AC
                 </th>
-                <th class="text-center">
+                <th class="text-center font-weight-bold blue lighten-5">
                   TOTAL
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="black--text text-left font-weight-bold">
-                  INDIVIDUALES
+                <td class="black--text text-center">
+                  {{ areaCounts.DP }}
                 </td>
                 <td class="black--text text-center">
-                  {{ areaCounts.dp.activities }}
+                  {{ areaCounts.RS }}
                 </td>
                 <td class="black--text text-center">
-                  {{ areaCounts.rs.activities }}
+                  {{ areaCounts.CEE }}
                 </td>
                 <td class="black--text text-center">
-                  {{ areaCounts.cee.activities }}
+                  {{ areaCounts.FCI }}
                 </td>
                 <td class="black--text text-center">
-                  {{ areaCounts.fci.activities }}
+                  {{ areaCounts.AC }}
                 </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.ac.activities }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.total.activities }}
-                </td>
-              </tr>
-              <tr>
-                <td class="black--text text-left font-weight-bold">
-                  COLECTIVAS
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.dp.collectives }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.rs.collectives }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.cee.collectives }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.fci.collectives }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.ac.collectives }}
-                </td>
-                <td class="black--text text-center">
-                  {{ areaCounts.total.collectives }}
-                </td>
-              </tr>
-              <tr class="blue lighten-5">
-                <td class="black--text text-left font-weight-bold">
-                  TOTAL
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.dp.total }}
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.rs.total }}
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.cee.total }}
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.fci.total }}
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.ac.total }}
-                </td>
-                <td class="black--text text-center font-weight-bold">
-                  {{ areaCounts.total.total }}
+                <td class="black--text text-center blue lighten-5">
+                  {{ areaCounts.total }}
                 </td>
               </tr>
             </tbody>
           </template>
         </v-simple-table>
+
         <v-skeleton-loader
           v-else
           type="table"
@@ -295,5 +246,4 @@ export default {
 </script>
 
 <style scoped>
-/* Your component styles go here */
 </style>
