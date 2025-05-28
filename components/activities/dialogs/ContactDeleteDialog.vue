@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="show"
-    max-width="400"
+    max-width="550"
     persistent
   >
     <v-card
@@ -11,7 +11,7 @@
     >
       <v-card-text class="bg-blue white--text py-4">
         <h2>
-          ELIMINAR PERIODO
+          ELIMINAR CONTACTO
         </h2>
       </v-card-text>
 
@@ -55,31 +55,12 @@
 
           <br>
 
-          <strong v-if="contactToDelete.relatedItem.type === 'activity'">DESCRIPCIÓN DE LA ACTIVIDAD:</strong>
-          <span v-if="contactToDelete.relatedItem.type === 'activity'">{{ contactToDelete.relatedItem.description.toUpperCase() }}</span>
-
-          <br>
-
           <strong>MOTIVO DEL CONTACTO:</strong>
           <span>{{ contactToDelete.description.toUpperCase() }}</span>
         </div>
 
-        <v-form
-          ref="form"
-          v-model="validForm"
-          lazy-validation
-          class="pt-6 black--text"
-        >
-          <h3>INTRODUCE TU CONTRASEÑA</h3>
-          <v-text-field
-            v-model="password"
-            :rules="[requiredRule]"
-            type="password"
-            outlined
-            dense
-            required
-          />
-        </v-form>
+        <br>
+
         <h3
           class="text-left subtitle black--text"
         >
@@ -117,26 +98,12 @@ export default {
     contactToDelete: {
       type: Object,
       required: true
-    },
-    requiredRule: {
-      type: Function,
-      required: true
-    },
-    validatePassword: {
-      type: Function,
-      required: true
-    },
-    mostrarAlerta: {
-      type: Function,
-      required: true
     }
   },
 
   data () {
     return {
-      show: true,
-      validForm: false,
-      password: ''
+      show: true
     }
   },
 
@@ -166,27 +133,17 @@ export default {
     },
 
     cancel () {
-      if (this.$refs.form) {
-        this.$refs.form.reset()
-      }
-      this.validForm = false
-      this.password = ''
       this.$emit('action', { action: 'cancel' })
     },
 
-    async deleteContact () {
-      if (!this.password) {
-        this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
-        return
-      }
+    deleteContact () {
+      if (confirm('¿ESTÁS SEGURO DE QUE DESEAS ELIMINAR ESTE CONTACTO? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
+        const data = {
+          contactId: this.contactToDelete.id,
+          activityId: this.contactToDelete.relatedItem.id
+        }
 
-      const validateForm = this.$refs.form.validate()
-      const validatePassword = await this.validatePassword(this.password)
-
-      if (validateForm && validatePassword) {
-        const id = this.contactToDelete.id
-
-        this.$emit('action', { action: 'deleteContact', id })
+        this.$emit('action', { action: 'deleteContact', data })
         this.cancel()
       }
     }

@@ -59,11 +59,6 @@
 
           <br>
 
-          <strong v-if="contactToUpdate.relatedItem.type === 'activity'">DESCRIPCIÓN DE LA ACTIVIDAD:</strong>
-          <span v-if="contactToUpdate.relatedItem.type === 'activity'">{{ contactToUpdate.relatedItem.description.toUpperCase() }}</span>
-
-          <br>
-
           <strong>MOTIVO DEL CONTACTO:</strong>
           <span>{{ contactToUpdate.description.toUpperCase() }}</span>
 
@@ -124,16 +119,6 @@
               </span>
             </template>
           </v-combobox>
-
-          <h3>INTRODUCE TU CONTRASEÑA</h3>
-          <v-text-field
-            v-model="password"
-            :rules="[requiredRule]"
-            type="password"
-            outlined
-            dense
-            required
-          />
         </v-form>
       </v-card-text>
 
@@ -171,14 +156,6 @@ export default {
     requiredRule: {
       type: Function,
       required: true
-    },
-    validatePassword: {
-      type: Function,
-      required: true
-    },
-    mostrarAlerta: {
-      type: Function,
-      required: true
     }
   },
 
@@ -186,7 +163,6 @@ export default {
     return {
       show: true,
       validForm: false,
-      password: '',
       newStatus: '',
       newObservations: '',
       statusOptions: [
@@ -221,7 +197,6 @@ export default {
 
     getActivityType (type) {
       const typeMap = {
-        collective: 'ACTIVIDAD COLECTIVA',
         activity: 'ACTIVIDAD INDIVIDUAL'
       }
 
@@ -248,16 +223,10 @@ export default {
       return statusMap[statusText] || 'pending'
     },
 
-    async updateContact () {
-      if (!this.password) {
-        this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
-        return
-      }
-
+    updateContact () {
       const validateForm = this.$refs.form.validate()
-      const validatePassword = await this.validatePassword(this.password)
 
-      if (validateForm && validatePassword) {
+      if (validateForm) {
         const id = this.contactToUpdate.id
         const status = typeof this.newStatus === 'object' ? this.newStatus.text : this.newStatus
         const statusForBackend = this.getBackendStatusCode(status)

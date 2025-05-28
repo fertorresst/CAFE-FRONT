@@ -93,15 +93,6 @@ export default {
       required: false,
       default: () => (null)
     },
-    collectiveId: {
-      type: Number,
-      required: false,
-      default: () => (null)
-    },
-    origin: {
-      type: String,
-      required: true
-    },
     requiredRule: {
       type: Function,
       required: true
@@ -129,19 +120,11 @@ export default {
     rejectActivity () {
       const validateForm = this.$refs.form.validate()
       if (validateForm) {
-        if (this.origin === 'individual') {
-          const data = {
-            observations: this.observations,
-            status: 'rejected'
-          }
-          this.$emit('action', { action: 'rejectActivity', id: this.activityId, data, origin: this.origin })
-        } else {
-          const data = {
-            observations: this.observations,
-            status: 'rejected'
-          }
-          this.$emit('action', { action: 'rejectCollective', id: this.collectiveId, data, origin: this.origin })
+        const data = {
+          observations: this.observations,
+          status: 'rejected'
         }
+        this.$emit('action', { action: 'rejectActivity', id: this.activityId, data })
 
         this.cancel()
       }

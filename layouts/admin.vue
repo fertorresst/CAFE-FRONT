@@ -59,6 +59,7 @@
             color="#cd7005"
             class="rounded-pill"
             text
+            @click="logout"
           >
             <v-icon>mdi-logout</v-icon>
             <strong class="pl-2 d-none d-md-inline">CERRAR SESIÓN</strong>
@@ -89,11 +90,13 @@ import { mapState } from 'vuex'
 import uiAlert from '@/components/ui-alert.vue'
 
 export default {
-  name: 'DefaultLayout',
+  name: 'AdminLayout',
 
   components: {
     uiAlert
   },
+
+  middleware: 'auth',
 
   data () {
     return {
@@ -124,7 +127,6 @@ export default {
   computed: {
     ...mapState({
       showAlert: state => state.showAlert
-      // token: state => state.token
     })
   },
 
@@ -133,6 +135,29 @@ export default {
   },
 
   methods: {
+    async logout () {
+      try {
+        const res = await this.$axios.post('/admin/logout', {}, { withCredentials: true })
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', 'SESIÓN CERRADA CORRECTAMENTE.')
+          this.$router.push('/admin/login')
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message)
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', 'ERROR AL CERRAR SESIÓN. VUELVE A INTENTARLO.')
+      }
+    },
+
+    async isLoggedIn () {
+      try {
+        await this.$axios.get('/admin/me')
+        return true
+      } catch (e) {
+        return false
+      }
+    },
+
     mostrarAlerta (color, type, message) {
       this.$store.commit('modifyAlert', true)
       this.$store.commit('modifyColor', `${color} darken-4`)

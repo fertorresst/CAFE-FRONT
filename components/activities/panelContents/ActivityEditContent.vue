@@ -24,21 +24,6 @@
 
         <v-col>
           <h3>
-            PONENTE O EXPOSITOR
-          </h3>
-          <v-text-field
-            v-model="editActivity.speaker"
-            flat
-            outlined
-            dense
-            type="text"
-            :rules="[requiredRule]"
-            required
-          />
-        </v-col>
-
-        <v-col>
-          <h3>
             INSTITUCIÓN ORGANIZADORA
           </h3>
           <v-text-field
@@ -52,21 +37,6 @@
           />
         </v-col>
       </v-row>
-
-      <h3>
-        DESCRIPCIÓN DE LA ACTIVIDAD
-      </h3>
-      <v-textarea
-        v-model="editActivity.description"
-        auto-grow
-        rows="3"
-        flat
-        outlined
-        dense
-        type="text"
-        :rules="[requiredRule]"
-        required
-      />
 
       <v-row class="d-flex flex-wrap flex-row align-stretch justify-center">
         <v-col>

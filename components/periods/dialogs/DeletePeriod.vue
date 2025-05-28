@@ -30,6 +30,16 @@
 
         <br>
 
+        <strong
+          v-if="periodToDelete.total_records > 0"
+          class="text-center red--text subtitle"
+        >
+          ESTE PERIODO YA CUENTA CON {{ periodToDelete.total_records }} SOLICITUDES, SI SE ELEMINA EL PERIODO, TAMBIÉN SE ELIMINARÁN LOS REGISTROS ASOCIADOS A ÉL.
+        </strong>
+
+        <br>
+        <br>
+
         <h3
           class="text-left subtitle black--text"
         >

@@ -59,11 +59,6 @@
 
         <br>
 
-        <strong>DESCRIPCIÓN DE LA ACTIVIDAD:</strong>
-        <span>{{ contactToInfo.relatedItem.description.toUpperCase() }}</span>
-
-        <br>
-
         <strong>MOTIVO DEL CONTACTO:</strong>
         <span>{{ contactToInfo.description.toUpperCase() }}</span>
 
@@ -197,8 +192,7 @@ export default {
 
     getActivityType (type) {
       const typeMap = {
-        collective: 'ACTIVIDAD COLECTIVA',
-        activity: 'ACTIVIDAD INDIVIDUAL'
+        collective: 'ACTIVIDAD COLECTIVA'
       }
 
       return typeMap[type] || type

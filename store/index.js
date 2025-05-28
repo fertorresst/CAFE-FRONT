@@ -8,6 +8,9 @@ export const state = () => ({
   user: {
     id: 1
   },
+  admin: {
+    id: 1
+  },
   token: null
 })
 

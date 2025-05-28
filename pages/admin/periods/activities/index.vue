@@ -1,9 +1,32 @@
 <template>
   <v-col cols="12">
-    <v-row class="my-4" align="center" justify="center">
-      <h2>
-        ALUMNOS A CONTACTAR
-      </h2>
+    <v-row class="my-4" align="center" style="position: relative; min-height: 56px;">
+      <!-- Botón de regreso a la izquierda -->
+      <v-col cols="auto" class="d-flex align-center" style="position: absolute; left: 0;">
+        <v-tooltip color="primary" bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              color="primary"
+              v-bind="attrs"
+              class="mr-2"
+              v-on="on"
+              @click="$router.push('/admin/periods')"
+            >
+              <v-icon>mdi-arrow-left</v-icon>
+            </v-btn>
+          </template>
+          <span>REGRESAR A PERIODOS</span>
+        </v-tooltip>
+      </v-col>
+      <!-- Título centrado absolutamente -->
+      <v-col cols="12" class="pa-0">
+        <div style="display: flex; justify-content: center; align-items: center; height: 56px;">
+          <h2 class="ml-2 mb-0" style="text-align: center; width: 100%;">
+            ALUMNOS A CONTACTAR
+          </h2>
+        </div>
+      </v-col>
     </v-row>
 
     <v-row align="center" justify="center">
@@ -57,7 +80,6 @@
       v-if="dialogDeleteContact"
       :contact-to-delete="contactToDelete"
       :required-rule="requiredRule"
-      :validate-password="validatePassword"
       :mostrar-alerta="mostrarAlerta"
       @action="decoder"
     />
@@ -78,7 +100,6 @@
       :period-id="periodId"
       :activity="activity"
       :activity-id="activityId"
-      :collective-id="collectiveId"
       :required-rule="requiredRule"
       @action="decoder"
     />
@@ -87,8 +108,6 @@
       v-if="dialogRejectActivity"
       :activity="activity"
       :activity-id="activityId"
-      :collective-id="collectiveId"
-      :origin="origin"
       :required-rule="requiredRule"
       @action="decoder"
     />
@@ -119,7 +138,7 @@ export default {
 
       // DATOS DE ENTRADA
       periodId: '',
-      adminId: 1,
+      adminId: this.$store.state.admin.id,
       tableOrigin: '',
       period: {
         per_name: ''
@@ -129,8 +148,13 @@ export default {
 
       // VARIABLE DE TABLAS
       footerProps: {
+        'items-per-page-options': [5, 10, 15, 20],
         'items-per-page-text': 'FILAS POR PÁGINA',
-        'items-per-page-options': [5, 10, 15, 20, 25, 50, 100]
+        'show-current-page': true,
+        'show-first-last-page': true,
+        'show-page-size-options': true,
+        'show-rows-per-page': true,
+        'show-select': true
       },
 
       // TABLA DE CONTACTOS
@@ -166,20 +190,13 @@ export default {
       dialogCreateContact: false,
       userId: null,
       activityId: null,
-      collectiveId: null,
       activity: {},
 
       areas: ['DP', 'RS', 'CEE', 'FCI', 'AC'],
-      origin: '',
 
       // ACTIVIDADES INDIVIDUALES
-      activitiesFlag: false,
       activities: [],
-      dialogRejectActivity: false,
-
-      // ACTIVIDADES COLECTIVAS
-      collectivesFlag: false,
-      collectives: []
+      dialogRejectActivity: false
     }
   },
 
@@ -214,93 +231,55 @@ export default {
     // EMITS DE LOS COMPONENTES
     decoder (data) {
       console.log('🚀 ~ decoder index ~ data:', data)
-
-      if (data.action === 'cancel') {
-        this.cancel()
-        return
-      }
-
-      if (data.action === 'deleteContactTable') {
-        this.deleteContactDialog(data.item)
-        return
-      }
-
-      if (data.action === 'infoContactTable') {
-        this.infoContactDialog(data.item)
-        return
-      }
-
-      if (data.action === 'updateContactTable') {
-        this.updateContactDialog(data.item)
-        return
-      }
-
-      if (data.action === 'deleteContact') {
-        this.deleteContact(data.id)
-        return
-      }
-
-      if (data.action === 'updateContact') {
-        this.updateContact(data.data)
-        return
-      }
-
-      if (data.action === 'createContactDialog') {
-        this.createContactDialog(data.alum.id, data.activity, data.origin)
-        return
-      }
-
-      if (data.action === 'createContact') {
-        this.createContact(data.data)
-        const activityId = data.data.activityId
-        const updateData = {
-          observations: data.data.description,
-          status: 'contacted'
+      switch (data.action) {
+        case 'alert':
+          this.mostrarAlerta(data.data.color, data.data.type, data.data.message)
+          break
+        case 'cancel':
+          this.cancel()
+          break
+        case 'deleteContactTable':
+          this.deleteContactDialog(data.item)
+          break
+        case 'infoContactTable':
+          this.infoContactDialog(data.item)
+          break
+        case 'updateContactTable':
+          this.updateContactDialog(data.item)
+          break
+        case 'deleteContact':
+          this.deleteContact(data.data.contactId)
+          this.changeStatusActivity(data.data.activityId, { status: 'pending' })
+          break
+        case 'updateContact':
+          this.updateContact(data.data)
+          break
+        case 'createContactDialog':
+          this.createContactDialog(data.alum.id, data.activity)
+          break
+        case 'createContact': {
+          this.createContact(data.data)
+          const activityId = data.data.activityId
+          const updateData = {
+            observations: data.data.description,
+            status: 'contacted'
+          }
+          this.changeStatusActivity(activityId, updateData)
+          break
         }
-        this.changeStatusActivity(activityId, updateData)
-        return
-      }
-
-      if (data.action === 'approveEdit') {
-        if (data.origin === 'individual') {
+        case 'approveEdit':
           this.updateActivity(data.data)
-        } else {
-          this.updateCollective(data.data)
-        }
-        return
-      }
-
-      if (data.action === 'rejectActivityDialog') {
-        this.rejectActivityDialog(data.activity, data.origin)
-        return
-      }
-
-      if ((data.action === 'rejectActivity' || data.action === 'approveActivity') && data.origin === 'individual') {
-        this.changeStatusActivity(data.id, data.data)
-      }
-    },
-
-    // VALIDAR CONTRASEÑA
-    async validatePassword (password) {
-      try {
-        const url = '/validate-password'
-        const data = {
-          user: this.$store.state.user,
-          password
-        }
-        const res = await this.$axios.post(url, data)
-
-        if (res.data.success) {
-          return res.data.success
-        }
-
-        this.mostrarAlerta('red', 'error', res.data.message)
-        return false
-      } catch (error) {
-        this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL VALIDAR LA CONTRASEÑA')
-        // eslint-disable-next-line no-console
-        console.error('Error:', error)
-        return false
+          break
+        case 'rejectActivityDialog':
+          this.rejectActivityDialog(data.activity)
+          break
+        case 'rejectActivity':
+        case 'approveActivity':
+          this.changeStatusActivity(data.id, data.data)
+          break
+        default:
+          this.mostrarAlerta('red', 'error', 'ACCIÓN NO VÁLIDA')
+          break
       }
     },
 
@@ -319,9 +298,7 @@ export default {
       this.contactToUpdate = []
       this.userId = null
       this.activityId = null
-      this.collectiveId = null
       this.activity = {}
-      this.origin = ''
     },
 
     cancel () {
@@ -331,34 +308,32 @@ export default {
     // CARGAR INFORMACIÓN DEL PERIODO
     async getPeriodInfo (periodId) {
       const url = `/periods/get-period-info/${periodId}`
-      await this.$axios.get(url)
-        .then((res) => {
-          if (res.data.success) {
-            this.period = res.data.period
-            this.mostrarAlerta('green', 'success', 'INFORMACIÓN DEL PERIODO CARGADA CORRECTAMENTE')
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ getPeriodInfo ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LA INFORMACIÓN DEL PERIODO')
-        })
+      try {
+        const res = await this.$axios.get(url)
+        if (res.data.success) {
+          this.period = res.data.period
+          this.mostrarAlerta('green', 'success', 'INFORMACIÓN DEL PERIODO CARGADA CORRECTAMENTE')
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CARGAR LA INFORMACIÓN DEL PERIODO')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL CARGAR LA INFORMACIÓN DEL PERIODO')
+      }
     },
 
     // CARGAR USUARIOS A CONTACTAR
     async getUserContact (periodId) {
       const url = `/contacts/get-contacts-by-period/${periodId}`
-      await this.$axios.get(url)
-        .then((res) => {
-          if (res.data.success) {
-            this.userContact = res.data.contacts
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ getUserContact ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LOS USUARIOS A CONTACTAR')
-        })
+      try {
+        const res = await this.$axios.get(url)
+        if (res.data.success) {
+          this.userContact = res.data.contacts
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CARGAR LOS USUARIOS A CONTACTAR')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL CARGAR LOS USUARIOS A CONTACTAR')
+      }
     },
 
     // DIALOG INFO CONTACTO
@@ -375,20 +350,17 @@ export default {
 
     async deleteContact (params) {
       const url = `/contacts/delete-contact-by-id/${params}`
-      await this.$axios.delete(url)
-        .then((res) => {
-          if (res.data.success) {
-            this.mostrarAlerta('green', 'success', res.data.message)
-            this.getUserContact(this.periodId)
-          } else {
-            this.mostrarAlerta('red', 'error', res.data.message)
-          }
-        })
-        .catch((e) => {
-          this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL ELIMINAR EL CONTACTO')
-          // eslint-disable-next-line no-console
-          console.log('🚀 ~ deleteContact ~ e: ', e)
-        })
+      try {
+        const res = await this.$axios.delete(url)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.getUserContact(this.periodId)
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'OCURRIÓ UN ERROR AL ELIMINAR EL CONTACTO')
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', e.response?.data?.message || 'OCURRIÓ UN ERROR AL ELIMINAR EL CONTACTO')
+      }
     },
 
     // DIALOG UPDATE CONTACT
@@ -397,153 +369,106 @@ export default {
       this.dialogUpdateContact = true
     },
 
-    updateContact (data) {
+    async updateContact (data) {
       const url = '/contacts/update-contact'
-      this.$axios.patch(url, data)
-        .then((res) => {
-          if (res.data.success) {
-            this.mostrarAlerta('green', 'success', res.data.message)
-            this.getUserContact(this.periodId)
-          } else {
-            this.mostrarAlerta('red', 'error', res.data.message)
-          }
-        })
-        .catch((e) => {
-          this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
-          // eslint-disable-next-line no-console
-          console.log('🚀 ~ updateContact ~ e: ', e)
-        })
+      try {
+        const res = await this.$axios.patch(url, data)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.getUserContact(this.periodId)
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', e.response?.data?.message || 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
+      }
     },
 
     // CARGAR ACTIVIDADES INDIVIDUALES
     loadActivities () {
-      this.activitiesFlag = true
-      this.collectivesFlag = false
       this.getActivities()
     },
 
     async getActivities () {
       const url = `/activities/get-activities-by-period/${this.periodId}`
-      await this.$axios.get(url)
-        .then((res) => {
-          if (res.data.success) {
-            if (this.activities.length === 0 || !this.activities) {
-              this.mostrarAlerta('green', 'success', res.data.message)
-            }
-            this.activities = res.data.data
+      try {
+        const res = await this.$axios.get(url)
+        if (res.data.success) {
+          if (this.activities.length === 0 || !this.activities) {
+            this.mostrarAlerta('green', 'success', res.data.message)
           }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ getActivities ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LAS ACTIVIDADES INDIVIDUALES')
-        })
+          this.activities = res.data.data
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CARGAR LAS ACTIVIDADES INDIVIDUALES')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL CARGAR LAS ACTIVIDADES INDIVIDUALES')
+      }
     },
 
     // CREAR CONTACTO
-    createContactDialog (userId, activity, origin) {
+    createContactDialog (userId, activity) {
       this.userId = userId
       this.activity = activity
-      if (origin === 'individual') {
-        this.activityId = activity.id
-      } else {
-        this.collectiveId = activity.id
-      }
+      this.activityId = activity.id
 
       this.dialogCreateContact = true
     },
 
     async createContact (data) {
       const url = '/contacts/create-contact'
-      await this.$axios.post(url, data)
-        .then((res) => {
-          if (res.data.success) {
-            this.mostrarAlerta('green', 'success', res.data.message)
-            this.getUserContact(this.periodId)
-          } else {
-            this.mostrarAlerta('red', 'error', res.data.message)
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ createContact ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CREAR EL CONTACTO')
-        })
+      try {
+        const res = await this.$axios.post(url, data)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.getUserContact(this.periodId)
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CREAR EL CONTACTO')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL CREAR EL CONTACTO')
+      }
     },
 
     // EDITAR ACTIVIDAD
-    updateActivity (activityData) {
+    async updateActivity (activityData) {
       const url = `/activities/update-activity/${activityData.id}`
-      this.$axios.put(url, activityData)
-        .then((res) => {
-          if (res.data.success) {
-            this.mostrarAlerta('green', 'success', res.data.message)
-            this.getActivities()
-          } else {
-            this.mostrarAlerta('red', 'error', res.data.message)
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ updateActivity ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL EDITAR LA ACTIVIDAD')
-        })
+      try {
+        const res = await this.$axios.put(url, activityData)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.getActivities()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL EDITAR LA ACTIVIDAD')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL EDITAR LA ACTIVIDAD')
+      }
     },
 
     // RECHAZAR ACTIVIDAD
-    rejectActivityDialog (activity, origin) {
-      if (origin === 'individual') {
-        this.activityId = activity.id
-      } else {
-        this.collectiveId = activity.id
-      }
+    rejectActivityDialog (activity) {
+      this.activityId = activity.id
       this.activity = activity
-      this.origin = origin
+
       this.dialogRejectActivity = true
     },
 
     // CAMBIAR ESTADO DE LA ACTIVIDAD
     async changeStatusActivity (params, data) {
       const url = `/activities/update-activity-status/${params}`
-      await this.$axios.patch(url, data)
-        .then((res) => {
-          if (res.data.success) {
-            this.getActivities()
-          } else {
-            this.mostrarAlerta('red', 'error', res.data.message)
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ changeStatusActivity ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CAMBIAR EL ESTADO DE LA ACTIVIDAD')
-        })
-    },
-
-    // CARGAR ACTIVIDADES COLECTIVAS
-    loadCollectives () {
-      this.activitiesFlag = false
-      this.collectivesFlag = true
-      this.getCollectives()
-    },
-
-    async getCollectives () {
-      const url = `/get-collectives-by-period/${this.periodId}`
-      await this.$axios.get(url)
-        .then((res) => {
-          if (res.data.success) {
-            if (this.collectives.length === 0 || !this.collectives) {
-              this.mostrarAlerta('green', 'success', res.data.message)
-            }
-            this.collectives = res.data.data
-            console.log('🚀 ~ .then ~ this.collectives:', this.collectives)
-          }
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('🚀 ~ getCollectives ~ error', error)
-          this.mostrarAlerta('red', 'error', 'ERROR AL CARGAR LAS ACTIVIDADES COLECTIVAS')
-        })
+      data.lastAdminId = this.adminId
+      try {
+        const res = await this.$axios.patch(url, data)
+        if (res.data.success) {
+          // Recarga todas las actividades para asegurar reactividad
+          await this.getActivities()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CAMBIAR EL ESTADO DE LA ACTIVIDAD')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL CAMBIAR EL ESTADO DE LA ACTIVIDAD')
+      }
     }
   }
 }

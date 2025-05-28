@@ -1,6 +1,13 @@
 <template>
-  <v-expansion-panels focusable>
-    <v-expansion-panel v-for="(alum, index) in activities" :key="index">
+  <v-expansion-panels
+    v-model="activePanel"
+    focusable
+    @change="onPanelChange"
+  >
+    <v-expansion-panel
+      v-for="(alum, index) in activities"
+      :key="index"
+    >
       <v-expansion-panel-header class="bg-blue white--text">
         <h4>{{ alum.nua }} &nbsp;|&nbsp; {{ alum.fullName.toUpperCase() }}</h4>
       </v-expansion-panel-header>
@@ -16,8 +23,15 @@
           </v-card-text>
         </v-card>
 
-        <v-expansion-panels focusable>
-          <v-expansion-panel v-for="(activity, indexA) in alum.activities" :key="indexA">
+        <v-expansion-panels
+          v-model="activeActivityPanel"
+          focusable
+          @change="onActivityPanelChange"
+        >
+          <v-expansion-panel
+            v-for="(activity, indexA) in alum.activities"
+            :key="indexA"
+          >
             <v-expansion-panel-header class="bg-gold white--text">
               <h4>
                 <v-icon
@@ -62,11 +76,12 @@
                   </h3>
                   <v-carousel>
                     <v-carousel-item
-                      v-for="(item,i) in items"
+                      v-for="(item, i) in activity.evidenceLinks"
                       :key="i"
-                      :src="item"
+                      :src="getEvidenceUrl(item)"
                       reverse-transition="fade-transition"
                       transition="fade-transition"
+                      contain
                     />
                   </v-carousel>
                 </v-col>
@@ -127,21 +142,15 @@ export default {
       editFlag: false,
       editActivity: {},
       validForm: false,
-      items: [
-        {
-          src: 'https://cdn.vuetifyjs.com/images/carousel/squirrel.jpg'
-        },
-        {
-          src: 'https://cdn.vuetifyjs.com/images/carousel/sky.jpg'
-        },
-        {
-          src: 'https://cdn.vuetifyjs.com/images/carousel/bird.jpg'
-        },
-        {
-          src: 'https://cdn.vuetifyjs.com/images/carousel/planet.jpg'
-        }
-      ]
+      activePanel: null, // Para el panel de alumnos
+      activeActivityPanel: null, // Para el panel de actividades
+      previousPanel: null,
+      previousActivityPanel: null
     }
+  },
+  mounted () {
+    this.previousPanel = this.activePanel
+    this.previousActivityPanel = this.activeActivityPanel
   },
 
   methods: {
@@ -168,7 +177,7 @@ export default {
 
       if (action === 'approveEdit') {
         const data = this.editActivity
-        this.$emit('action', { action, data, origin: 'individual' })
+        this.$emit('action', { action, data })
         this.editFlag = false
         this.editActivity = null
         return
@@ -177,7 +186,7 @@ export default {
       if (action === 'rejectActivityDialog') {
         this.editFlag = false
         this.editActivity = null
-        this.$emit('action', { action, activity, origin: 'individual' })
+        this.$emit('action', { action, activity })
         return
       }
 
@@ -188,7 +197,7 @@ export default {
           observations: 'ACTIVIDAD APROBADA',
           status: 'approval'
         }
-        this.$emit('action', { action, data, id: activity.id, origin: 'individual' })
+        this.$emit('action', { action, data, id: activity.id })
         return
       }
 
@@ -220,6 +229,44 @@ export default {
 
     cancelEdit () {
       this.editFlag = false
+    },
+
+    getEvidenceUrl (link) {
+      return `http://localhost:5010${link}`
+    },
+
+    onPanelChange (newIndex) {
+      if (this.editFlag) {
+        const data = {
+          color: 'red',
+          type: 'error',
+          message: 'GUARDA O CANCELA LA EDICIÓN ANTES DE CAMBIAR DE ACTIVIDAD'
+        }
+        this.$emit('action', { action: 'alert', data })
+        // Evita el cambio de panel
+        this.$nextTick(() => {
+          this.activePanel = this.previousPanel
+        })
+      } else {
+        this.previousPanel = newIndex
+      }
+    },
+
+    onActivityPanelChange (newIndex) {
+      if (this.editFlag) {
+        const data = {
+          color: 'red',
+          type: 'error',
+          message: 'GUARDA O CANCELA LA EDICIÓN ANTES DE CAMBIAR DE ACTIVIDAD'
+        }
+        this.$emit('action', { action: 'alert', data })
+        // Evita el cambio de panel
+        this.$nextTick(() => {
+          this.activeActivityPanel = this.previousActivityPanel
+        })
+      } else {
+        this.previousActivityPanel = newIndex
+      }
     }
   }
 }

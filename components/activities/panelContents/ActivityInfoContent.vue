@@ -61,6 +61,7 @@
         </div>
         <activities-actions
           v-if="!editFlag"
+          :key="activity.id + '-' + activity.status"
           :activity="activity"
           :table-origin="tableOrigin"
           @createContact="decoder(action = 'createContactDialog', alum, activity)"

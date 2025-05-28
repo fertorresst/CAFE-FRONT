@@ -101,11 +101,6 @@ export default {
       required: false,
       default: () => (null)
     },
-    collectiveId: {
-      type: Number,
-      required: false,
-      default: () => (null)
-    },
     activity: {
       type: Object,
       required: true
@@ -142,7 +137,6 @@ export default {
           adminId: this.adminId,
           periodId: this.periodId,
           activityId: this.activityId,
-          collectiveId: this.collectiveId,
           description: this.description
         }
 

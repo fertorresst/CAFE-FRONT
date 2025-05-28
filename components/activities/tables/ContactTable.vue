@@ -110,24 +110,6 @@
                 </v-tooltip>
 
                 <v-tooltip
-                  color="error"
-                  bottom
-                >
-                  <template #activator="{ on, attrs }">
-                    <v-icon
-                      color="error"
-                      size="28"
-                      v-bind="attrs"
-                      v-on="on"
-                      @click="emit(item, 'deleteContactTable')"
-                    >
-                      mdi-delete-circle
-                    </v-icon>
-                  </template>
-                  <span>ELIMINAR CONTACTO</span>
-                </v-tooltip>
-
-                <v-tooltip
                   color="success"
                   bottom
                 >
