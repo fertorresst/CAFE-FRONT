@@ -41,10 +41,8 @@
             v-model="dateStart"
             :rules="[
               requiredRule,
-              dateStartRule,
               v => dateRange(v, dateStart, dateEnd)
             ]"
-            :min="minDateStart"
             type="date"
             outlined
             dense
@@ -62,15 +60,6 @@
             ]"
             :min="dateStart"
             type="date"
-            outlined
-            dense
-            required
-          />
-          <h3>INTRODUCE TU CONTRASEÑA</h3>
-          <v-text-field
-            v-model="password"
-            :rules="[requiredRule]"
-            type="password"
             outlined
             dense
             required
@@ -127,10 +116,6 @@ export default {
       type: Function,
       required: true
     },
-    dateStartRule: {
-      type: Function,
-      required: true
-    },
     dateEndRule: {
       type: Function,
       required: true
@@ -141,10 +126,6 @@ export default {
     },
     minDateStart: {
       type: String,
-      required: true
-    },
-    validatePassword: {
-      type: Function,
       required: true
     },
     mostrarAlerta: {
@@ -160,8 +141,6 @@ export default {
   data () {
     return {
       show: true,
-      validForm: false,
-      password: '',
       dateStart: moment(this.periodToEdit.per_date_start).format('YYYY-MM-DD'),
       dateEnd: moment(this.periodToEdit.per_date_end).format('YYYY-MM-DD')
     }
@@ -174,21 +153,25 @@ export default {
 
         const start = this.moment(this.dateStart)
         const end = this.moment(this.dateEnd)
+        const isEditingExclusive = !!this.periodToEdit.per_exclusive
 
         const overlappingPeriod = this.allPeriods.find((period) => {
-          // Ignorar el periodo actual si estamos editando
+        // Ignorar el periodo actual si estamos editando
           if (period.per_id === this.periodToEdit.per_id) { return false }
+          // Solo comparar con periodos del mismo tipo (exclusivo u ordinario)
+          if (!!period.per_exclusive !== isEditingExclusive) { return false }
+
           const periodStart = this.moment(period.dateStart || period.per_date_start)
           const periodEnd = this.moment(period.dateEnd || period.per_date_end)
 
           return (
             start.isSameOrBefore(periodEnd) &&
-            end.isSameOrAfter(periodStart)
+          end.isSameOrAfter(periodStart)
           )
         })
 
         return overlappingPeriod
-          ? `LAS FECHAN SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
+          ? `LAS FECHAS SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
           : true
       }
     }
@@ -196,27 +179,15 @@ export default {
 
   methods: {
     cancel () {
-      if (this.$refs.form) {
-        this.$refs.form.reset()
-      }
-      this.validForm = false
-      this.password = ''
       this.dateStart = ''
       this.dateEnd = ''
       this.$emit('action', { action: 'cancel' })
     },
 
     editPeriod () {
-      if (!this.password) {
-        this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
-        return
-      }
-
       const validateForm = this.$refs.form.validate()
-      // const validatePassword = await this.validatePassword(this.password)
 
-      const validatePassword = true
-      if (validateForm && validatePassword) {
+      if (validateForm) {
         const data = {
           id: this.periodToEdit.per_id,
           dateStart: this.dateStart,

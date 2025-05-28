@@ -42,12 +42,12 @@
             <br>
 
             <strong>FECHA DE INICIO: </strong>
-            <span>{{ moment(activityInfo.dateStart).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+            <span>{{ moment(activityInfo.startDate).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
 
             <br>
 
             <strong>FECHA DE FIN: </strong>
-            <span>{{ moment(activityInfo.dateEnd).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+            <span>{{ moment(activityInfo.endDate).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
 
             <br>
 
@@ -117,7 +117,7 @@
             <br>
 
             <strong v-if="activityInfo.observations">ÚLTIMAS OBSERVACIONES: </strong>
-            <span>{{ activityInfo.observations.toUpperCase() }}</span>
+            <span v-if="activityInfo.observations">{{ activityInfo.observations.toUpperCase() }}</span>
           </v-col>
         </v-row>
 
@@ -128,9 +128,10 @@
           <v-carousel-item
             v-for="(item, i) in activityInfo.evidenceLinks"
             :key="i"
-            :src="item"
+            :src="getEvidenceUrl(item)"
             reverse-transition="fade-transition"
             transition="fade-transition"
+            contain
           />
         </v-carousel>
       </v-card-text>
@@ -192,6 +193,10 @@ export default {
       if (this.activityInfo.status === 'contacted') {
         return 'CONTACTADO PARA ACLARACIÓN'
       }
+    },
+
+    getEvidenceUrl (link) {
+      return `http://localhost:5010${link}`
     }
   }
 }

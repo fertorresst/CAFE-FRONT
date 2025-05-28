@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row align="center" justify="center">
       <h1 class="my-5">
-        LISTA DE PERIODOS
+        DASHBOARD DE PERIODOS
       </h1>
     </v-row>
 
@@ -181,13 +181,20 @@ export default {
     ActiveTable
   },
 
+  layout: 'admin',
+
   data () {
     return {
       moment,
       panel: 0,
       footerProps: {
-        'items-per-page-text': 'Filas por página',
-        'items-per-page-options': [5, 10, 15, 20, 25, 50, 100]
+        'items-per-page-options': [5, 10, 15, 20],
+        'items-per-page-text': 'FILAS POR PÁGINA',
+        'show-current-page': true,
+        'show-first-last-page': true,
+        'show-page-size-options': true,
+        'show-rows-per-page': true,
+        'show-select': true
       },
 
       // REGLAS
@@ -199,7 +206,7 @@ export default {
         return value > dateStart || 'LA FECHA DE FIN DEBE SER MAYOR A LA FECHA DE INICIO'
       },
       requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
-      dateRange: (v, dateStart, dateEnd) => {
+      dateRange: (v, dateStart, dateEnd, exclusive) => {
         if (!dateStart || !dateEnd) {
           return true
         }
@@ -207,23 +214,26 @@ export default {
         const startDate = moment(dateStart)
         const endDate = moment(dateEnd)
 
-        // Verificar si el rango de fechas se sobrepone con algún periodo existente
+        // 1. Validar solapamiento solo con periodos del mismo tipo
         const hasOverlap = this.allPeriods.some((period) => {
-          const periodStart = moment(period.dateStart)
-          const periodEnd = moment(period.dateEnd)
+          // Solo comparar con periodos del mismo tipo (exclusivo u ordinario)
+          if (!!period.per_exclusive !== !!exclusive) { return false }
+
+          const periodStart = moment(period.dateStart || period.per_date_start)
+          const periodEnd = moment(period.dateEnd || period.per_date_end)
 
           return (
             (startDate.isBetween(periodStart, periodEnd, 'day', '[]') ||
-            endDate.isBetween(periodStart, periodEnd, 'day', '[]')) &&
-            period.status === 'active'
+              endDate.isBetween(periodStart, periodEnd, 'day', '[]')) &&
+            period.per_status === 'active'
           )
         })
 
-        if (hasOverlap && this.dialogNewPeriod) {
-          return 'EL RANGO DE FECHAS SE SOBREPONE CON UN PERIODO EXISTENTE'
+        if (hasOverlap) {
+          return 'EL RANGO DE FECHAS SE SOBREPONE CON UN PERIODO EXISTENTE DEL MISMO TIPO'
         }
 
-        // Periodo Enero-Julio (meses 0-6)
+        // 2. Validar rango Enero-Julio o Agosto-Diciembre
         const isFirstPeriod = startDate.isBetween(
           moment(`${startDate.year()}-01-01`),
           moment(`${startDate.year()}-07-31`),
@@ -236,7 +246,6 @@ export default {
           '[]'
         )
 
-        // Periodo Agosto-Diciembre (meses 7-11)
         const isSecondPeriod = startDate.isBetween(
           moment(`${startDate.year()}-08-01`),
           moment(`${startDate.year()}-12-31`),
@@ -251,7 +260,7 @@ export default {
 
         return isFirstPeriod || isSecondPeriod || 'LAS FECHAS DEBEN ESTAR EN EL INTERVALO ENERO-JULIO O AGOSTO-DICIEMBRE'
       },
-      minDateStart: new Date().toISOString().split('T')[0],
+      minDateStart: moment().format('YYYY-MM-DD'),
 
       // DIALOG AGREGAR NUEVO PERIODO
       dialogNewPeriod: false,
@@ -434,7 +443,7 @@ export default {
     },
 
     async getAllPeriods () {
-      const url = '/get-all-periods'
+      const url = '/periods/get-all-periods'
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
@@ -461,7 +470,7 @@ export default {
     },
 
     async createPeriod (data) {
-      const url = '/create-period'
+      const url = '/periods/create-period'
 
       await this.$axios.post(url, data)
         .then((res) => {
@@ -488,7 +497,7 @@ export default {
     },
 
     async deletePeriod (params) {
-      const url = `/delete-period/${params}`
+      const url = `/periods/delete-period/${params}`
       await this.$axios.delete(url)
         .then((res) => {
           if (res.data.success) {
@@ -514,7 +523,7 @@ export default {
     },
 
     async editPeriod (data) {
-      const url = '/update-dates'
+      const url = '/periods/update-dates'
 
       await this.$axios.patch(url, data)
         .then((res) => {
@@ -550,7 +559,7 @@ export default {
     },
 
     async changeStatus (data) {
-      const url = '/update-status'
+      const url = '/periods/update-status'
       await this.$axios.patch(url, data)
         .then((res) => {
           if (res.data.success) {
@@ -577,7 +586,7 @@ export default {
 
     async getAreaCounts (params) {
       try {
-        const url = `/get-area-counts/${params}`
+        const url = `/periods/get-area-counts/${params}`
         const res = await this.$axios.get(url)
 
         if (res.data.success) {

@@ -19,11 +19,27 @@
 
     <v-row align="center" justify="center">
       <StudentActivitiesPanel
+        v-if="sendActivities.length"
         :send-activities="sendActivities"
+        :areas="areas"
+        :required-rule="requiredRule"
+        :date-end-rule="dateEndRule"
+        :files-limit-rule="filesLimitRule"
+        :get-send-activities="getSendActivities"
+        :mostrar-alerta="mostrarAlerta"
         :footer-props="footerProps"
         :moment="moment"
         @action="decoder"
       />
+
+      <h4
+        v-else
+        class="text-center my-5"
+      >
+        AUN NO ENVÍAS NINGUNA ACTIVIDAD
+        <br>
+        DA CLICK EN EL BOTÓN DE ARRIBA PARA ENVIAR UNA ACTIVIDAD
+      </h4>
     </v-row>
 
     <StudentSendActivitiesDialog
@@ -33,6 +49,7 @@
       :required-rule="requiredRule"
       :files-limit-rule="filesLimitRule"
       :mostrar-alerta="mostrarAlerta"
+      :get-send-activities="getSendActivities"
       :moment="moment"
       @action="decoder"
     />
@@ -110,7 +127,7 @@ export default {
     // OBTENER LAS ACTIVIDADES ENVIADAS POR EL USUARIO
     async getSendActivities () {
       try {
-        const url = `/get-activities-by-user/${this.$store.state.user.id}`
+        const url = `/activities/get-activities-by-user/${this.$store.state.user.id}`
         const res = await this.$axios.get(url)
         if (res.data.success) {
           if (this.sendActivities.length === 0) {
@@ -132,7 +149,7 @@ export default {
     // ELIMINAR ACTIVIDAD
     async deleteActivity (id) {
       try {
-        const url = `/delete-activity/${id}`
+        const url = `/activities/delete-activity/${id}`
         const res = await this.$axios.delete(url)
         if (res.data.success) {
           this.getSendActivities()

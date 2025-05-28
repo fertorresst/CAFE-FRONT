@@ -98,7 +98,7 @@
         <strong>
           OBSERVACIONES:
         </strong>
-        <span>
+        <span v-if="activity.observations">
           {{ activity.observations.toUpperCase() }}
         </span>
       </v-col>

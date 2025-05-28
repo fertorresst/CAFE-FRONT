@@ -30,6 +30,9 @@
             {{ periodToChangeStatus.per_name }}
           </strong>
           aun no llega a su fecha de fin ¿Estás seguro de finalizarlo?
+          <br>
+          <br>
+          Después de finalizarlo ya no se podrán realizar cambios ni recibir solicitudes.
         </h3>
       </v-card-text>
 
@@ -38,10 +41,10 @@
         class="py-3"
       >
         <h3
-          class="text-center subtitle black--text"
+          class="text-left subtitle black--text"
         >
           ¿Estás seguro de que desea {{ textNewStatus }} este periodo?
-          <br>
+
           <strong
             class="text-left subtitle mt-4"
             style="color: #07538a"
@@ -51,27 +54,8 @@
         </h3>
       </v-card-text>
 
-      <v-card-text>
-        <v-form
-          ref="form"
-          v-model="validForm"
-          lazy-validation
-          class="black--text pt-4"
-        >
-          <h3>INTRODUCE TU CONTRASEÑA</h3>
-          <v-text-field
-            v-model="password"
-            :rules="[requiredRule]"
-            type="password"
-            outlined
-            dense
-            required
-          />
-        </v-form>
-      </v-card-text>
-
       <v-card-actions
-        class="d-flex justify-center pt-0 pb-6"
+        class="d-flex justify-center pb-6"
       >
         <v-btn
           color="black"
@@ -117,14 +101,6 @@ export default {
       type: Function,
       required: true
     },
-    requiredRule: {
-      type: Function,
-      required: true
-    },
-    validatePassword: {
-      type: Function,
-      required: true
-    },
     mostrarAlerta: {
       type: Function,
       required: true
@@ -133,33 +109,17 @@ export default {
 
   data () {
     return {
-      show: true,
-      password: '',
-      validForm: false
+      show: true
     }
   },
 
   methods: {
     cancel () {
-      if (this.$refs.form) {
-        this.$refs.form.reset()
-      }
-      this.validForm = false
-      this.password = ''
       this.$emit('action', { action: 'cancel' })
     },
 
     endPeriod () {
-      if (!this.password) {
-        this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
-        return
-      }
-
-      const validateForm = this.$refs.form.validate()
-      // const validatePassword = await this.validatePassword(this.password)
-
-      const validatePassword = true
-      if (validateForm && validatePassword) {
+      if (confirm('ESTA ACCIÓN NO SE PUEDE DESHACER. ¿ESTÁS SEGURO DE QUE DESEAS ' + this.textNewStatus.toUpperCase() + ' ESTE PERIODO?')) {
         const data = {
           id: this.periodToChangeStatus.per_id,
           status: this.newStatus

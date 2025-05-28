@@ -111,6 +111,8 @@ moment.locale('es')
 export default {
   components: { ActivityRejectDialog, ContactNewDialog, ActivitiesPanel, ContactUpdateDialog, ContactDeleteDialog, ContactInfoDialog, ContactTable },
 
+  layout: 'admin',
+
   data () {
     return {
       moment,
@@ -328,7 +330,7 @@ export default {
 
     // CARGAR INFORMACIÓN DEL PERIODO
     async getPeriodInfo (periodId) {
-      const url = `/get-period-info/${periodId}`
+      const url = `/periods/get-period-info/${periodId}`
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
@@ -345,7 +347,7 @@ export default {
 
     // CARGAR USUARIOS A CONTACTAR
     async getUserContact (periodId) {
-      const url = `/get-contacts-by-period/${periodId}`
+      const url = `/contacts/get-contacts-by-period/${periodId}`
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
@@ -372,7 +374,7 @@ export default {
     },
 
     async deleteContact (params) {
-      const url = `/delete-contact-by-id/${params}`
+      const url = `/contacts/delete-contact-by-id/${params}`
       await this.$axios.delete(url)
         .then((res) => {
           if (res.data.success) {
@@ -396,7 +398,7 @@ export default {
     },
 
     updateContact (data) {
-      const url = '/update-contact'
+      const url = '/contacts/update-contact'
       this.$axios.patch(url, data)
         .then((res) => {
           if (res.data.success) {
@@ -421,7 +423,7 @@ export default {
     },
 
     async getActivities () {
-      const url = `/get-activities-by-period/${this.periodId}`
+      const url = `/activities/get-activities-by-period/${this.periodId}`
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
@@ -452,7 +454,7 @@ export default {
     },
 
     async createContact (data) {
-      const url = '/create-contact'
+      const url = '/contacts/create-contact'
       await this.$axios.post(url, data)
         .then((res) => {
           if (res.data.success) {
@@ -471,7 +473,7 @@ export default {
 
     // EDITAR ACTIVIDAD
     updateActivity (activityData) {
-      const url = `/update-activity/${activityData.id}`
+      const url = `/activities/update-activity/${activityData.id}`
       this.$axios.put(url, activityData)
         .then((res) => {
           if (res.data.success) {
@@ -502,7 +504,7 @@ export default {
 
     // CAMBIAR ESTADO DE LA ACTIVIDAD
     async changeStatusActivity (params, data) {
-      const url = `/update-activity-status/${params}`
+      const url = `/activities/update-activity-status/${params}`
       await this.$axios.patch(url, data)
         .then((res) => {
           if (res.data.success) {

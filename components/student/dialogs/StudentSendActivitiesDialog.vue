@@ -25,9 +25,9 @@
           elevation="0"
           class="rounded-xl"
         >
-          <v-stepper-step :complete="step > 1" step="1" class="bg-gold" complete-icon="mdi-check white--text" color="bg-blue white--text">
-            SELECCIONA UN PERIODO
-            <small class="subtitle">ELIGE UN PERIODO ACTIVO</small>
+          <v-stepper-step :complete="step > 1" step="1" class="bg-blue" complete-icon="mdi-check white--text" color="bg-yellow black--text">
+            <span class="white--text">SELECCIONA UN PERIODO</span>
+            <small class="white--text subtitle">ELIGE UN PERIODO ACTIVO</small>
           </v-stepper-step>
 
           <v-stepper-content step="1">
@@ -96,9 +96,9 @@
             </v-card>
           </v-stepper-content>
 
-          <v-stepper-step :complete="step > 2" step="2" class="bg-gold" complete-icon="mdi-check white--text" color="bg-blue white--text">
-            REGISTRAR ACTIVIDAD
-            <small class="subtitle">INGRESE LOS DATOS DE LA ACTIVIDAD</small>
+          <v-stepper-step :complete="step > 2" step="2" class="bg-blue" complete-icon="mdi-check white--text" color="bg-yellow black--text">
+            <span class="white--text">REGISTRAR ACTIVIDAD</span>
+            <small class="white--text subtitle">INGRESE LOS DATOS DE LA ACTIVIDAD</small>
           </v-stepper-step>
 
           <v-stepper-content step="2">
@@ -143,12 +143,13 @@
                       FECHA DE INICIO
                     </h3>
                     <v-text-field
-                      v-model="currentActivityData.startDate"
+                      v-model="currentActivityData.dateStart"
                       flat
                       outlined
                       dense
                       type="date"
                       :rules="[requiredRule]"
+                      :max="maxDate"
                       required
                     />
                   </v-col>
@@ -157,16 +158,18 @@
                       FECHA DE TÉRMINO
                     </h3>
                     <v-text-field
-                      v-model="currentActivityData.endDate"
+                      v-model="currentActivityData.dateEnd"
                       flat
                       outlined
                       dense
                       type="date"
                       :rules="[
                         requiredRule,
-                        v => dateEndRule(v, currentActivityData.startDate)
+                        v => dateEndRule(v, currentActivityData.dateStart)
                       ]"
-                      :min="currentActivityData.startDate"
+                      :min="currentActivityData.dateStart"
+                      :max="maxDate"
+                      :disabled="!currentActivityData.dateStart"
                       required
                     />
                   </v-col>
@@ -207,7 +210,7 @@
                 </v-row>
 
                 <h3>
-                  EVIDENCIA
+                  EVIDENCIAS
                 </h3>
                 <v-file-input
                   v-model="currentActivityData.evidence"
@@ -216,18 +219,19 @@
                   dense
                   small-chips
                   type="file"
-                  :rules="[requiredRule, filesLimitRule]"
-                  accept=".jpg, .jpeg, .png"
+                  :rules="[requiredRule, filesLimitRule, filesSizeRule]"
+                  accept=".jpg, .jpeg, .png, .webp"
                   required
                   show-size
                   multiple
+                  :max-size="3 * 1024 * 1024"
                   :counter="2"
                 />
 
                 <h5
                   class="text-left subtitle my-0 py-0"
                 >
-                  *Subir evidencias en formato .jpg, .jpeg o .png. Máximo 2 archivos.
+                  *Subir evidencias en formato .jpg, .jpeg, .png o .webp. Máximo 2 archivos de 5 MB cada uno.
                 </h5>
               </v-form>
 
@@ -247,6 +251,7 @@
                   color="#fed55e"
                   rounded
                   elevation="0"
+                  :disabled="!currentActivityData.evidence"
                   @click="sendActivity()"
                 >
                   <strong>ENVIAR</strong>
@@ -296,6 +301,10 @@ export default {
       type: Function,
       required: true
     },
+    getSendActivities: {
+      type: Function,
+      required: true
+    },
     moment: {
       type: Function,
       required: true
@@ -310,6 +319,11 @@ export default {
       period: '',
       activePeriods: null,
       exclusiveActivePeriods: null,
+      maxDate: this.moment().format('YYYY-MM-DD'),
+      filesSizeRule: files =>
+        !files ||
+        files.every(file => file.size <= 3 * 1024 * 1024) ||
+        'TAMAÑO MÁXIMO DE 3 MB POR ARCHIVO',
 
       activePeriodsItems: [],
       exclusiveActivePeriodsItems: [],
@@ -341,7 +355,7 @@ export default {
 
   methods: {
     async getAllPeriods () {
-      const url = '/get-all-periods'
+      const url = '/periods/get-all-periods'
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {
@@ -419,41 +433,46 @@ export default {
       return this.moment(date).format('DD/MM/YYYY')
     },
 
-    sendActivity () {
+    async sendActivity () {
       try {
+        // Validar el formulario
+        if (!this.$refs.activityForm.validate()) {
+          this.mostrarAlerta('red', 'error', 'ERROR AL VALIDAR EL FORMULARIO')
+          return
+        }
         // Preparar los datos para enviar
         const formData = new FormData()
 
-        formData.append('period_id', this.period)
-        formData.append('user_id', this.$store.state.user.id)
-        formData.append('activity_name', this.currentActivityData.name)
-        formData.append('activity_institution', this.currentActivityData.institution)
-        formData.append('activity_date_start', this.currentActivityData.startDate)
-        formData.append('activity_date_end', this.currentActivityData.endDate)
-        formData.append('activity_hours', this.currentActivityData.hours)
-        formData.append('activity_area', this.currentActivityData.area)
-        formData.append('activity_evidence', this.currentActivityData.evidence)
-        formData.append('activity_exclusive', this.exclusive ? 1 : 0)
+        formData.append('periodId', this.period)
+        formData.append('userId', this.$store.state.user.id)
+        formData.append('name', this.currentActivityData.name)
+        formData.append('institution', this.currentActivityData.institution)
+        formData.append('dateStart', this.currentActivityData.dateStart)
+        formData.append('dateEnd', this.currentActivityData.dateEnd)
+        formData.append('hours', this.currentActivityData.hours)
+        formData.append('area', this.currentActivityData.area)
+        formData.append('status', 'pending')
 
-        console.log('FORM DATA:')
-        for (const pair of formData.entries()) {
-          console.log(pair[0] + ':', pair[1])
+        // Agregar cada archivo como files[]
+        if (this.currentActivityData.evidence && this.currentActivityData.evidence.length) {
+          for (const file of this.currentActivityData.evidence) {
+            formData.append('files', file)
+          }
         }
-        // // Realizar la petición para enviar las actividades
-        // const response = await this.$axios.post('/student/send-activities', formData)
 
-        // if (response.data.success) {
-        //   this.$store.dispatch('showSnackbar', {
-        //     text: 'Actividades enviadas correctamente',
-        //     color: 'success'
-        //   })
-        //   this.close()
-        // } else {
-        //   throw new Error(response.data.message || 'Error al enviar actividades')
-        // }
+        // Realizar la petición para enviar las actividades
+        const res = await this.$axios.post('/evidence/create-activity-with-evidence', formData)
+
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.close()
+          this.getSendActivities()
+        } else {
+          throw new Error(res.data.message || 'ERROR AL ENVIAR ACTIVIDAD')
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error('ERROR AL ENVIAR LAS ACTIVIDADES:', error)
+        console.error('ERROR AL ENVIAR ACTIVIDAD:', error)
         this.mostrarAlerta('red', 'error', error)
       }
     }

@@ -28,7 +28,7 @@
             :rules="[
               requiredRule,
               dateStartRule,
-              v => dateRange(v, dateStart, dateEnd)
+              v => dateRange(v, dateStart, dateEnd, exclusive)
             ]"
             :min="minDateStart"
             type="date"
@@ -43,7 +43,7 @@
             :rules="[
               requiredRule,
               v => dateEndRule(v, dateStart),
-              v => dateRange(v, dateStart, dateEnd),
+              v => dateRange(v, dateStart, dateEnd,exclusive),
               dateOverlapRule
             ]"
             :min="dateStart"
@@ -159,6 +159,9 @@ export default {
         const end = this.moment(this.dateEnd)
 
         const overlappingPeriod = this.allPeriods.find((period) => {
+          // Solo comparar con periodos del mismo tipo (exclusivo u ordinario)
+          if (!!period.per_exclusive !== !!this.exclusive) { return false }
+
           const periodStart = this.moment(period.dateStart || period.per_date_start)
           const periodEnd = this.moment(period.dateEnd || period.per_date_end)
 
@@ -169,7 +172,7 @@ export default {
         })
 
         return overlappingPeriod
-          ? `LAS FECHAN SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
+          ? `LAS FECHAS SE SOLAPAN EN EL PERIODO ${overlappingPeriod.name || overlappingPeriod.per_name}`
           : true
       }
     }
@@ -186,8 +189,16 @@ export default {
     exclusive: {
       handler () {
         this.updatePeriodId()
+        // Forzar la revalidación del formulario
+        if (this.$refs.form) {
+          this.$refs.form.validate()
+        }
       }
     }
+  },
+
+  mounted () {
+    console.log('NewPeriod mounted', this.allPeriods)
   },
 
   methods: {
@@ -199,16 +210,22 @@ export default {
       const month = date.month() + 1
 
       const prefix = month >= 1 && month <= 7 ? 'EJ' : 'AD'
-
       const baseId = `${prefix}${year}`
 
+      // Filtrar periodos por tipo (exclusivo/ordinario) y año
       const matchingPeriods = this.allPeriods.filter((p) => {
-        return p.per_name && p.per_name.startsWith(baseId)
+        if (!p.per_name) { return false }
+        // Coincide el prefijo y año
+        if (!p.per_name.startsWith(baseId)) { return false }
+        // Coincide el tipo (exclusivo/ordinario)
+        const isExclusive = p.per_name.endsWith('E')
+        return isExclusive === this.exclusive
       })
 
       let maxNumber = 0
       matchingPeriods.forEach((period) => {
-        const match = period.per_name.match(new RegExp(baseId + '-([0-9]+)'))
+        // Extrae el número consecutivo antes de la E (si existe)
+        const match = period.per_name.match(new RegExp(`${baseId}-(\\d+)`))
         if (match && match[1]) {
           const num = parseInt(match[1])
           if (num > maxNumber) {
@@ -218,7 +235,6 @@ export default {
       })
 
       const newNumber = maxNumber + 1
-
       this.periodId = `${baseId}-${newNumber}${this.exclusive ? 'E' : ''}`
     },
 

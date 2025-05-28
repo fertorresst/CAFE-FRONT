@@ -35,6 +35,18 @@
       @action="decoder"
     />
 
+    <StudentActivitiesEditDialog
+      v-if="activityEditDialog"
+      :activity-edit="activityEdit"
+      :areas="areas"
+      :required-rule="requiredRule"
+      :date-end-rule="dateEndRule"
+      :get-send-activities="getSendActivities"
+      :mostrar-alerta="mostrarAlerta"
+      :moment="moment"
+      @action="decoder"
+    />
+
     <StudentActivityDeleteDialog
       v-if="activityDeleteDialog"
       :activity-delete="activityDelete"
@@ -44,19 +56,44 @@
 </template>
 
 <script>
+import StudentActivitiesEditDialog from '../dialogs/StudentActivitiesEditDialog'
 import StudentActivityDeleteDialog from '../dialogs/StudentActivityDeleteDialog'
 import StudentPeriodInfoTable from '../tables/StudentPeriodInfoTable'
 import StudentActivityInfoDialog from '../dialogs/StudentActivityInfoDialog'
 import StudentSendActivities from '../tables/StudentSendActivities'
 
 export default {
-  components: { StudentActivityDeleteDialog, StudentPeriodInfoTable, StudentActivityInfoDialog, StudentSendActivities },
+  components: { StudentActivitiesEditDialog, StudentActivityDeleteDialog, StudentPeriodInfoTable, StudentActivityInfoDialog, StudentSendActivities },
 
   props: {
     sendActivities: {
       type: Array,
       required: true,
       default: () => {}
+    },
+    areas: {
+      type: Array,
+      required: true
+    },
+    requiredRule: {
+      type: Function,
+      required: true
+    },
+    dateEndRule: {
+      type: Function,
+      required: true
+    },
+    filesLimitRule: {
+      type: Function,
+      required: true
+    },
+    mostrarAlerta: {
+      type: Function,
+      required: true
+    },
+    getSendActivities: {
+      type: Function,
+      required: true
     },
     footerProps: {
       type: Object,
@@ -74,6 +111,9 @@ export default {
       activityInfoDialog: false,
       activityInfo: {},
 
+      activityEditDialog: false,
+      activityEdit: {},
+
       activityDeleteDialog: false,
       activityDelete: {}
     }
@@ -82,12 +122,18 @@ export default {
   methods: {
     decoder (data) {
       if (data.action === 'cancel') {
+        console.log(this.sendActivities)
         this.clean()
       }
 
       if (data.action === 'activityInfoDialog') {
         this.activityInfo = data.item
         this.activityInfoDialog = true
+      }
+
+      if (data.action === 'activityEditDialog') {
+        this.activityEdit = data.item
+        this.activityEditDialog = true
       }
 
       if (data.action === 'activityDeleteDialog') {
@@ -104,6 +150,9 @@ export default {
     clean () {
       this.activityInfo = {}
       this.activityInfoDialog = false
+
+      this.activityEdit = {}
+      this.activityEditDialog = false
 
       this.activityDelete = {}
       this.activityDeleteDialog = false

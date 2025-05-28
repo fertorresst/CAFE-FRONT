@@ -21,29 +21,15 @@
         >
           ¿Estás seguro de que deseas eliminar este periodo?
           <strong
-            class="text-left subtitle mt-4"
+            class="text-center subtitle mt-4"
             style="color: #07538a"
           >
-            {{ periodToDelete.id }}
+            {{ periodToDelete.per_name }}
           </strong>
         </h3>
 
-        <v-form
-          ref="form"
-          v-model="validForm"
-          lazy-validation
-          class="pt-6 black--text"
-        >
-          <h3>INTRODUCE TU CONTRASEÑA</h3>
-          <v-text-field
-            v-model="password"
-            :rules="[requiredRule]"
-            type="password"
-            outlined
-            dense
-            required
-          />
-        </v-form>
+        <br>
+
         <h3
           class="text-left subtitle black--text"
         >
@@ -82,14 +68,6 @@ export default {
       type: Object,
       required: true
     },
-    requiredRule: {
-      type: Function,
-      required: true
-    },
-    validatePassword: {
-      type: Function,
-      required: true
-    },
     mostrarAlerta: {
       type: Function,
       required: true
@@ -98,33 +76,21 @@ export default {
 
   data () {
     return {
-      show: true,
-      validForm: false,
-      password: ''
+      show: true
     }
+  },
+
+  mounted () {
+    console.log('DeletePeriod mounted', this.periodToDelete)
   },
 
   methods: {
     cancel () {
-      if (this.$refs.form) {
-        this.$refs.form.reset()
-      }
-      this.validForm = false
-      this.password = ''
       this.$emit('action', { action: 'cancel' })
     },
 
     deletePeriod () {
-      if (!this.password) {
-        this.mostrarAlerta('red', 'error', 'DEBES INTRODUCIR TU CONTRASEÑA')
-        return
-      }
-
-      const validateForm = this.$refs.form.validate()
-      // const validatePassword = await this.validatePassword(this.password)
-
-      const validatePassword = true
-      if (validateForm && validatePassword) {
+      if (confirm('¿ESTAS SEGURO DE QUE DESEAS ELIMINAR ESTE PERIODO? Esta acción no se puede deshacer.')) {
         const id = this.periodToDelete.per_id
 
         this.$emit('action', { action: 'deletePeriod', id })

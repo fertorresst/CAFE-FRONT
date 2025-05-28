@@ -9,12 +9,12 @@
       <template #[`item.name`]="{ item }">
         <strong>{{ item.name.toUpperCase() }}</strong>
       </template>
-      <template #[`item.dateStart`]="{ item }">
-        {{ moment(item.dateStart).format('DD MMM YY').toUpperCase() }}
+      <template #[`item.startDate`]="{ item }">
+        {{ moment(item.startDate).format('DD MMM YY').toUpperCase() }}
       </template>
 
-      <template #[`item.dateEnd`]="{ item }">
-        {{ moment(item.dateEnd).format('DD MMM YY').toUpperCase() }}
+      <template #[`item.endDate`]="{ item }">
+        {{ moment(item.endDate).format('DD MMM YY').toUpperCase() }}
       </template>
 
       <template #[`item.status`]="{ item }">
@@ -96,7 +96,7 @@
                 size="30"
                 v-bind="attrs"
                 v-on="on"
-                @click="emit(item, 'editTable')"
+                @click="emit(item, 'activityEditDialog')"
               >
                 mdi-pencil-circle
               </v-icon>
@@ -138,7 +138,7 @@
 export default {
   props: {
     sendActivities: {
-      type: Object,
+      type: Array,
       required: true,
       default: () => {}
     },
@@ -161,8 +161,8 @@ export default {
     return {
       headersSendActivities: [
         { text: 'NOMBRE', value: 'name', align: 'start' },
-        { text: 'FECHA INICIO', value: 'dateStart', align: 'start' },
-        { text: 'FECHA FIN', value: 'dateEnd', align: 'start' },
+        { text: 'FECHA INICIO', value: 'startDate', align: 'start' },
+        { text: 'FECHA FIN', value: 'endDate', align: 'start' },
         { text: 'AREA', value: 'area', align: 'center' },
         { text: 'HORAS', value: 'hours', align: 'center' },
         { text: 'ESTADO', value: 'status', align: 'center' },
