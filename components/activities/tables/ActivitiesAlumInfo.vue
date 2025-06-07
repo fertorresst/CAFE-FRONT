@@ -12,6 +12,9 @@
             NUA
           </th>
           <th class="text-center">
+            SEDE
+          </th>
+          <th class="text-center">
             CARRERA
           </th>
           <th class="text-center">
@@ -31,7 +34,10 @@
             {{ alum.nua }}
           </td>
           <td class="black--text text-center">
-            {{ alum.career }}
+            {{ alum.sede }}
+          </td>
+          <td class="black--text text-center">
+            {{ getCareerAcronym(alum.career) }}
           </td>
           <td class="black--text text-center">
             {{ alum.email }}
@@ -57,16 +63,37 @@ export default {
     }
   },
 
+  data () {
+    return {
+      careerAcronyms: {
+        IS75LI0103: 'LIM',
+        IS75LI0203: 'LIE',
+        IS75LI0303: 'LICE',
+        IS75LI03Y3: 'LICE-Y',
+        IS75LI0403: 'LIME',
+        IS75LI0502: 'LISC',
+        IS75LI05Y2: 'LISC-Y',
+        IS75LI0602: 'LGE',
+        IS75LI06Y2: 'LGE-Y',
+        IS75LI0702: 'LAD',
+        IS75LI0801: 'LIDIA'
+      }
+    }
+  },
+
   methods: {
     formatPhone (phone) {
       return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')
+    },
+
+    getCareerAcronym (key) {
+      return this.careerAcronyms[key] || key
     },
 
     getLength (alum) {
       if (alum.activities) {
         return alum.activities.length
       }
-
       if (alum.collectives) {
         return alum.collectives.length
       }

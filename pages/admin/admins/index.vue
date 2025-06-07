@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row align="center" justify="center">
       <h1 class="my-5">
-        PERFILES DE ADMINISTRADORES
+        PERFILES DE ADMINISTRACIÓN
       </h1>
     </v-row>
 
@@ -34,7 +34,7 @@
 
             <AdminsActiveTable
               v-else
-              :admins-active="adminsActive"
+              :admins-active="filteredAdminsActive"
               :footer-props="footerProps"
               @action="decoder"
             />
@@ -132,6 +132,8 @@ export default {
 
   layout: 'admin',
 
+  middleware: 'auth-admin',
+
   data () {
     return {
       moment,
@@ -187,18 +189,42 @@ export default {
 
   computed: {
     ...mapState({
-      showAlert: state => state.showAlert
-      // token: state => state.token
-    })
+      showAlert: state => state.showAlert,
+      admin: state => state.admin // Asegúrate de tener el admin logueado en el store
+    }),
+    filteredAdminsActive () {
+      return this.adminsActive.filter(
+        admin => admin.id !== 1 && admin.id !== this.admin?.id
+      )
+    },
+    isSuperadmin () {
+      return this.admin.role === 'superadmin'
+    },
+    isAdmin () {
+      return this.admin.role === 'admin'
+    },
+    isValidador () {
+      return this.admin.role === 'validador'
+    },
+    isConsulta () {
+      return this.admin.role === 'consulta'
+    }
   },
 
   watch: {
     showAlert () {}
   },
 
+  created () {
+    if (!this.isSuperadmin) {
+      this.$router.push('/admin/periods')
+    }
+  },
+
   mounted () {
-    this.loadAdmins()
-    console.log('Admins mounted', this.adminsActive)
+    if (this.isSuperadmin) {
+      this.loadAdmins()
+    }
   },
 
   methods: {
@@ -407,9 +433,20 @@ export default {
 
     // ELIMINAR ADMINISTRADOR
     async deleteAdmin (data) {
+      // Validación en frontend
+      if (data.id === 1) {
+        this.mostrarAlerta('red', 'error', 'NO PUEDES ELIMINAR AL SUPERADMIN PRINCIPAL.')
+        return
+      }
+      if (data.id === this.admin?.id) {
+        this.mostrarAlerta('red', 'error', 'NO PUEDES ELIMINAR TU PROPIO PERFIL.')
+        return
+      }
       try {
         const url = `/admin/delete-admin/${data.id}`
-        await this.$axios.delete(url)
+        const currentAdminId = { currentAdminId: this.admin?.id }
+        // Envía el id del admin actual al backend para validación extra
+        await this.$axios.delete(url, currentAdminId)
           .then((response) => {
             if (response.data.success) {
               this.mostrarAlerta('green', 'success', 'ADMINISTRADOR ELIMINADO EXITOSAMENTE.')

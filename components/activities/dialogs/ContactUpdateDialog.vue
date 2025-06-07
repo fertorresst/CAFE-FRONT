@@ -88,7 +88,7 @@
           />
 
           <h3>SELECCIONA UN ESTADO</h3>
-          <v-combobox
+          <v-select
             v-model="newStatus"
             :rules="[requiredRule]"
             :items="statusOptions"
@@ -118,7 +118,7 @@
                 {{ item.text }}
               </span>
             </template>
-          </v-combobox>
+          </v-select>
         </v-form>
       </v-card-text>
 

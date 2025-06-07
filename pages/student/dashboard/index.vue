@@ -65,6 +65,10 @@ moment.locale('es')
 export default {
   components: { StudentSendActivitiesDialog, StudentActivitiesPanel },
 
+  layout: 'student',
+
+  middleware: 'auth-student',
+
   data () {
     return {
       moment,
@@ -83,10 +87,33 @@ export default {
 
       // REGLAS
       dateEndRule: (value, dateStart) => {
-        return value >= dateStart || 'LA FECHA DE FIN DEBE SER MAYOR O IGUAL A LA FECHA DE INICIO'
+        return value >= dateStart ||
+        'LA FECHA DE FIN DEBE SER MAYOR O IGUAL A LA FECHA DE INICIO'
       },
-      requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
-      filesLimitRule: files => !files || files.length <= 2 || 'SOLO SE PERMITEN 2 ARCHIVOS POR ACTIVIDAD',
+      requiredRule: value =>
+        !!value || 'ESTE CAMPO ES REQUERIDO',
+      filesLimitRule: files =>
+        !files ||
+        files.length <= 2 ||
+        'SOLO SE PERMITEN 2 ARCHIVOS POR ACTIVIDAD',
+      filesSizeRule: files =>
+        !files ||
+        files.every(file => file.size <= 3 * 1024 * 1024) ||
+        'TAMAÑO MÁXIMO DE 3 MB POR ARCHIVO',
+
+      activePeriodsItems: [],
+      exclusiveActivePeriodsItems: [],
+
+      // Datos para las actividades
+      currentActivityData: {
+        name: '',
+        dateStart: '',
+        dateEnd: '',
+        hours: null,
+        institution: '',
+        area: '',
+        evidence: null
+      },
 
       // DIALOGO DE ENVIAR ACTIVIDADES
       sendActivitiesDialog: false

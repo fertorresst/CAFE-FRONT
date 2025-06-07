@@ -8,6 +8,7 @@
 
     <v-row align="center" justify="center">
       <v-btn
+        v-if="isSuperadmin || isAdmin"
         elevation="0"
         class="rounded-pill mb-4"
         color="#fed55e"
@@ -35,7 +36,7 @@
             <active-table
               v-else
               :active-periods="activePeriods"
-              :headers-active-periods="headersActivePeriods"
+              :headers-active-periods="filteredHeadersActivePeriods"
               :moment="moment"
               :footer-props="footerProps"
               @action="decoder"
@@ -60,7 +61,7 @@
             <pending-table
               v-else
               :pending-periods="pendingPeriods"
-              :headers-pending-periods="headersPendingPeriods"
+              :headers-pending-periods="filteredHeadersPendingPeriods"
               :moment="moment"
               :footer-props="footerProps"
               @action="decoder"
@@ -85,7 +86,7 @@
             <ended-table
               v-else
               :ended-periods="endedPeriods"
-              :headers-ended-periods="headersEndedPeriods"
+              :headers-ended-periods="filteredHeadersEndedPeriods"
               :moment="moment"
               :footer-props="footerProps"
               @action="decoder"
@@ -159,6 +160,9 @@
 <script>
 import moment from 'moment'
 import { mapState } from 'vuex'
+import * as XLSX from 'xlsx-js-style'
+import { saveAs } from 'file-saver'
+
 import DetailsPeriod from '../../../components/periods/dialogs/DetailsPeriod'
 import ChangeStatus from '../../../components/periods/dialogs/ChangeStatus'
 import EditPeriod from '../../../components/periods/dialogs/EditPeriod'
@@ -167,6 +171,10 @@ import NewPeriod from '../../../components/periods/dialogs/NewPeriod'
 import EndedTable from '../../../components/periods/tables/EndedTable'
 import PendingTable from '../../../components/periods/tables/PendingTable'
 import ActiveTable from '../../../components/periods/tables/ActiveTable'
+
+let JSPDF = null
+let autoTable = null
+
 moment.locale('es')
 
 export default {
@@ -182,6 +190,8 @@ export default {
   },
 
   layout: 'admin',
+
+  middleware: 'auth-admin',
 
   data () {
     return {
@@ -331,8 +341,38 @@ export default {
   computed: {
     ...mapState({
       showAlert: state => state.showAlert
-      // token: state => state.token
-    })
+    }),
+    isSuperadmin () {
+      return this.$store.state.admin.role === 'superadmin'
+    },
+    isAdmin () {
+      return this.$store.state.admin.role === 'admin'
+    },
+    isValidador () {
+      return this.$store.state.admin.role === 'validador'
+    },
+    isConsulta () {
+      return this.$store.state.admin.role === 'consulta'
+    },
+    filteredHeadersActivePeriods () {
+      // Solo superadmin y admin ven acciones
+      if (this.isSuperadmin || this.isAdmin) {
+        return this.headersActivePeriods
+      }
+      return this.headersActivePeriods.filter(h => h.value !== 'actions')
+    },
+    filteredHeadersPendingPeriods () {
+      if (this.isSuperadmin || this.isAdmin) {
+        return this.headersPendingPeriods
+      }
+      return this.headersPendingPeriods.filter(h => h.value !== 'actions')
+    },
+    filteredHeadersEndedPeriods () {
+      if (this.isSuperadmin || this.isAdmin) {
+        return this.headersEndedPeriods
+      }
+      return this.headersEndedPeriods.filter(h => h.value !== 'actions')
+    }
   },
 
   watch: {
@@ -341,6 +381,14 @@ export default {
 
   mounted () {
     this.getAllPeriods()
+
+    // Importa jsPDF y autoTable solo en el cliente
+    // eslint-disable-next-line nuxt/no-env-in-hooks
+    if (process.client) {
+      const jsPDF = require('jspdf')
+      JSPDF = jsPDF.jsPDF
+      autoTable = require('jspdf-autotable').default
+    }
   },
 
   methods: {
@@ -358,28 +406,45 @@ export default {
     // EMITS DE LOS COMPONENTES
     decoder (data) {
       console.log('🚀 ~ decoder ~ data:', data)
-      if (data.action === 'cancel') {
-        this.cancel()
-      } else if (data.action === 'deleteTable') {
-        this.deletePeriodDialog(data.item)
-      } else if (data.action === 'editTable') {
-        this.editPeriodDialog(data.item)
-      } else if (data.action === 'finishTable') {
-        this.changeStatusDialog(data)
-      } else if (data.action === 'detailsTable') {
-        this.infoPeriodDialog(data.item)
-      } else if (data.action === 'closeTable') {
-        this.changeStatusDialog(data)
-      } else if (data.action === 'downloadTable') {
-        this.downloadReport()
-      } else if (data.action === 'createPeriod') {
-        this.createPeriod(data.period)
-      } else if (data.action === 'deletePeriod') {
-        this.deletePeriod(data.id)
-      } else if (data.action === 'updatePeriod') {
-        this.editPeriod(data.data)
-      } else if (data.action === 'changeStatus') {
-        this.changeStatus(data.data)
+      switch (data.action) {
+        case 'cancel':
+          this.cancel()
+          break
+        case 'deleteTable':
+          this.deletePeriodDialog(data.item)
+          break
+        case 'editTable':
+          this.editPeriodDialog(data.item)
+          break
+        case 'finishTable':
+          this.changeStatusDialog(data)
+          break
+        case 'detailsTable':
+          this.infoPeriodDialog(data.item)
+          break
+        case 'closeTable':
+          this.changeStatusDialog(data)
+          break
+        case 'downloadExcelTable':
+          this.downloadExcelReport(data.item)
+          break
+        case 'downloadPDFTable':
+          this.downloadPDFReport(data.item)
+          break
+        case 'createPeriod':
+          this.createPeriod(data.period)
+          break
+        case 'deletePeriod':
+          this.deletePeriod(data.id)
+          break
+        case 'updatePeriod':
+          this.editPeriod(data.data)
+          break
+        case 'changeStatus':
+          this.changeStatus(data.data)
+          break
+        default:
+          break
       }
     },
 
@@ -391,30 +456,6 @@ export default {
           tableOrigin: data.tableOrigin
         }
       })
-    },
-
-    // VALIDAR CONTRASEÑA
-    async validatePassword (password) {
-      try {
-        const url = '/validate-password'
-        const data = {
-          user: this.$store.state.user,
-          password
-        }
-        const res = await this.$axios.post(url, data)
-
-        if (res.data.success) {
-          return res.data.success
-        }
-
-        this.mostrarAlerta('red', 'error', res.data.message)
-        return false
-      } catch (error) {
-        this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL VALIDAR LA CONTRASEÑA')
-        // eslint-disable-next-line no-console
-        console.error('Error:', error)
-        return false
-      }
     },
 
     // LIMPIAR VARIABLES Y FORMULARIOS
@@ -600,6 +641,237 @@ export default {
         console.error('ERROR:', error)
         return false
       }
+    },
+
+    // DESCARGAR REPORTE EN EXCEL
+    async downloadExcelReport (period) {
+      try {
+        const res = await this.$axios.get(`/periods/final-report/${period.per_id}`)
+        if (res.data.success) {
+          this.generateExcelReport(res.data.report)
+        } else {
+          this.mostrarAlerta('red', 'error', 'NO SE PUDO OBTENER LA INFORMACIÓN DEL REPORTE.')
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', 'ERROR AL DESCARGAR EL REPORTE.')
+      }
+    },
+
+    generateExcelReport (report) {
+      const { period, students } = report
+      const sheetData = []
+      const merges = []
+      const goldFill = { fill: { patternType: 'solid', fgColor: { rgb: 'FFC4BD97' } } }
+
+      // Formatea fechas
+      const fechaInicio = period.per_date_start ? this.moment(period.per_date_start).format('DD/MM/YYYY') : ''
+      const fechaFin = period.per_date_end ? this.moment(period.per_date_end).format('DD/MM/YYYY') : ''
+      const exclusivo = period.per_exclusive ? 'SI' : 'NO'
+
+      // Encabezado del periodo (combinado A1:D1, centrado y dorado)
+      sheetData.push([
+        { v: `PERIODO ${period.per_name}` || '', s: { alignment: { horizontal: 'center' }, ...goldFill } }, '', '', ''
+      ])
+      merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } })
+
+      // Fila de títulos (centrado, sin color)
+      sheetData.push([
+        { v: 'INICIO', s: { alignment: { horizontal: 'center' }, ...goldFill } },
+        '',
+        { v: 'TÉRMINO', s: { alignment: { horizontal: 'center' }, ...goldFill } },
+        { v: '¿EXCLUSIVO?', s: { alignment: { horizontal: 'center' }, ...goldFill } }
+      ])
+      merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 1 } })
+
+      // Fila de datos (centrado y dorado)
+      sheetData.push([
+        { v: fechaInicio, s: { alignment: { horizontal: 'center' }, ...goldFill } },
+        '',
+        { v: fechaFin, s: { alignment: { horizontal: 'center' }, ...goldFill } },
+        { v: exclusivo, s: { alignment: { horizontal: 'center' }, ...goldFill } }
+      ])
+      merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 1 } })
+
+      sheetData.push([]) // Fila vacía
+
+      let row = sheetData.length
+
+      students.forEach((alum) => {
+        // Color amarillo
+        const yellowFill = { fill: { patternType: 'solid', fgColor: { rgb: 'FFFED55E' } } }
+        const blueFill = { fill: { patternType: 'solid', fgColor: { rgb: 'FF49E8FD' } } }
+        // Fila 1: NUA | NOMBRE(S) | APELLIDO PATERNO | APELLIDO MATERNO
+        sheetData.push([
+          { v: alum.use_nua, s: { alignment: { horizontal: 'left' }, ...yellowFill } },
+          { v: alum.use_name.toUpperCase(), s: { alignment: { horizontal: 'left' }, ...yellowFill } },
+          { v: alum.use_last_name.toUpperCase(), s: { alignment: { horizontal: 'left' }, ...yellowFill } },
+          { v: alum.use_second_last_name.toUpperCase() || '', s: { alignment: { horizontal: 'left' }, ...yellowFill } }
+        ])
+        row++
+
+        // Fila 2: CORREO (A-C combinadas) | TELÉFONO (D)
+        sheetData.push([
+          { v: alum.use_email, s: yellowFill },
+          '',
+          '',
+          { v: alum.use_phone, s: yellowFill }
+        ])
+        merges.push({ s: { r: row, c: 0 }, e: { r: row, c: 2 } })
+        row++
+
+        // Fila 3: SEDE (A-B combinadas) | CARRERA NOMBRE COMPLETO (C-D combinadas)
+        sheetData.push([
+          { v: alum.use_sede, s: yellowFill },
+          '',
+          { v: alum.career_full_name, s: yellowFill },
+          ''
+        ])
+        merges.push({ s: { r: row, c: 0 }, e: { r: row, c: 1 } })
+        merges.push({ s: { r: row, c: 2 }, e: { r: row, c: 3 } })
+        row++
+
+        // Horas por área (solo el valor a la izquierda)
+        const areaHours = { DP: 0, RS: 0, CEE: 0, FCI: 0, AC: 0 }
+        let totalHoras = 0
+        alum.activities.forEach((act) => {
+          if (areaHours[act.act_area] !== undefined) {
+            areaHours[act.act_area] += act.act_hours
+            totalHoras += act.act_hours
+          }
+        })
+
+        sheetData.push(['', 'DP', { v: areaHours.DP, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push(['', 'RS', { v: areaHours.RS, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push(['', 'CEE', { v: areaHours.CEE, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push(['', 'FCI', { v: areaHours.FCI, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push(['', 'AC', { v: areaHours.AC, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push(['', 'TOTAL', { v: totalHoras, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        row++
+        sheetData.push([]) // Fila vacía entre alumnos
+        row++
+      })
+
+      // Genera el archivo Excel
+      const ws = XLSX.utils.aoa_to_sheet(sheetData)
+      ws['!merges'] = merges
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Reporte')
+
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+      saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Reporte_${period.per_name}.xlsx`)
+    },
+
+    // DESCARGAR REPORTE EN PDF
+    async downloadPDFReport (period) {
+      try {
+        const res = await this.$axios.get(`/periods/final-report/${period.per_id}`)
+        if (res.data.success) {
+          this.exportPDFReport(res.data.report)
+        } else {
+          this.mostrarAlerta('red', 'error', 'NO SE PUDO OBTENER LA INFORMACIÓN DEL REPORTE.')
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', 'ERROR AL DESCARGAR EL REPORTE.')
+      }
+    },
+
+    exportPDFReport (report) {
+      // Verifica que estás en el cliente
+      if (!process.client) {
+        console.error('PDF export can only run on client-side')
+        return
+      }
+
+      const { period, students } = report
+      const doc = new JSPDF()
+      const fechaInicio = period.per_date_start ? this.moment(period.per_date_start).format('DD/MM/YYYY') : ''
+      const fechaFin = period.per_date_end ? this.moment(period.per_date_end).format('DD/MM/YYYY') : ''
+      const exclusivo = period.per_exclusive ? 'SI' : 'NO'
+
+      // Encabezado del periodo
+      doc.setFontSize(14)
+      doc.text(`PERIODO: ${period.per_name || ''}`, 14, 15)
+      doc.setFontSize(10)
+      doc.text(`INICIO: ${fechaInicio}    TÉRMINO: ${fechaFin}    ¿EXCLUSIVO?: ${exclusivo}`, 14, 22)
+
+      let startY = 30
+
+      students.forEach((alum, idx) => {
+        // Datos del alumno
+        doc.setFillColor(73, 232, 253) // Amarillo
+        doc.setDrawColor(0)
+        doc.rect(14, startY, 182, 8, 'F')
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(0)
+        doc.text(
+          `${alum.use_nua}   ${alum.use_name.toUpperCase()}   ${alum.use_last_name.toUpperCase()}   ${alum.use_second_last_name ? alum.use_second_last_name.toUpperCase() : ''}`,
+          16, startY + 6
+        )
+
+        startY += 10
+
+        // Correo y teléfono
+        doc.setFillColor(73, 232, 253)
+        doc.rect(14, startY, 136, 8, 'F')
+        doc.rect(150, startY, 46, 8, 'F')
+        doc.text(`${alum.use_email}`, 16, startY + 6)
+        doc.text(`${alum.use_phone}`, 152, startY + 6)
+
+        startY += 10
+
+        // Sede y carrera
+        doc.setFillColor(73, 232, 253)
+        doc.rect(14, startY, 60, 8, 'F')
+        doc.rect(74, startY, 122, 8, 'F')
+        doc.text(`${alum.use_sede}`, 16, startY + 6)
+        doc.text(`${alum.career_full_name}`, 76, startY + 6)
+
+        startY += 12
+
+        // Horas por área
+        const areaHours = { DP: 0, RS: 0, CEE: 0, FCI: 0, AC: 0 }
+        let totalHoras = 0
+        alum.activities.forEach((act) => {
+          if (areaHours[act.act_area] !== undefined) {
+            areaHours[act.act_area] += act.act_hours
+            totalHoras += act.act_hours
+          }
+        })
+
+        // Tabla de horas
+        autoTable(doc, {
+          startY,
+          head: [['ÁREA', 'HORAS']],
+          body: [
+            ['DP', areaHours.DP],
+            ['RS', areaHours.RS],
+            ['CEE', areaHours.CEE],
+            ['FCI', areaHours.FCI],
+            ['AC', areaHours.AC],
+            ['TOTAL', totalHoras]
+          ],
+          theme: 'grid',
+          styles: { halign: 'left', fillColor: [254, 213, 94] },
+          headStyles: { fillColor: [73, 232, 253], textColor: 0 },
+          margin: { left: 14, right: 14 }
+        })
+
+        startY = doc.lastAutoTable.finalY + 10
+
+        // Salto de página si es necesario
+        if (startY > 250 && idx < students.length - 1) {
+          doc.addPage()
+          startY = 15
+        }
+      })
+
+      doc.save(`Reporte_${period.per_name}.pdf`)
     }
   }
 }

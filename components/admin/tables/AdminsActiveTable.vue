@@ -95,10 +95,6 @@ export default {
     }
   },
 
-  mounted () {
-    console.log('AdminsActiveTable mounted', this.adminsActive)
-  },
-
   methods: {
     emit (item, action) {
       this.$emit('action', { item, action })

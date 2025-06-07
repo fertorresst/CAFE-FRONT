@@ -87,7 +87,7 @@
           <v-row align="center">
             <v-col lg="4" md="4" sm="12" xs="12" class="col-full-xs">
               <h3>ROL</h3>
-              <v-combobox
+              <v-select
                 v-model="currentEdit.role"
                 :items="roles"
                 :rules="[requiredRule]"

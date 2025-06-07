@@ -113,7 +113,9 @@ export default {
       return v => !!v || 'ESTE CAMPO ES REQUERIDO'
     },
     passwordRule () {
-      return v => (v && v.length >= 6) || 'LA CONTRASEÑA DEBE TENER AL MENOS 6 CARACTERES'
+      return v =>
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(v) ||
+        'LA CONTRASEÑA DEBE TENER AL MENOS 8 CARACTERES, UNA MAYÚSCULA, UNA MINÚSCULA, UN NÚMERO Y UN CARÁCTER ESPECIAL'
     },
     passwordConfirmRule () {
       return v => v === this.password || 'LAS CONTRASEÑAS NO COINCIDEN'

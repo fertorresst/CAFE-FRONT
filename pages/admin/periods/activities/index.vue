@@ -20,16 +20,26 @@
         </v-tooltip>
       </v-col>
       <!-- Título centrado absolutamente -->
-      <v-col cols="12" class="pa-0">
+      <v-col v-if="!isConsulta" cols="12" class="pa-0">
         <div style="display: flex; justify-content: center; align-items: center; height: 56px;">
           <h2 class="ml-2 mb-0" style="text-align: center; width: 100%;">
             ALUMNOS A CONTACTAR
           </h2>
         </div>
       </v-col>
+
+      <v-col v-else cols="12" class="pa-0">
+        <div style="display: flex; justify-content: center; align-items: center; height: 56px;">
+          <h2 class="ml-2 mb-0" style="text-align: center; width: 100%;">
+            ACTIVIDADES ENVIADAS POR LOS ALUMNOS EN EL PERIODO
+            <br>
+            {{ period.per_name.toUpperCase() }}
+          </h2>
+        </div>
+      </v-col>
     </v-row>
 
-    <v-row align="center" justify="center">
+    <v-row v-if="!isConsulta" align="center" justify="center">
       <contact-table
         :user-contact="userContact"
         :headers-contact="headersContact"
@@ -40,6 +50,7 @@
     </v-row>
 
     <v-row
+      v-if="!isConsulta"
       class="text-center d-flex justify-center align-center mt-15 mb-4"
     >
       <h4
@@ -132,13 +143,15 @@ export default {
 
   layout: 'admin',
 
+  middleware: 'auth-admin',
+
   data () {
     return {
       moment,
 
       // DATOS DE ENTRADA
       periodId: '',
-      adminId: this.$store.state.admin.id,
+      adminId: null,
       tableOrigin: '',
       period: {
         per_name: ''
@@ -159,7 +172,6 @@ export default {
 
       // TABLA DE CONTACTOS
       headersContact: [
-        { text: 'ID', align: 'left', value: 'id', sortable: false },
         { text: 'NUA', align: 'left', value: 'user.nua', sortable: true },
         { text: 'NOMBRE', align: 'left', value: 'user.name', sortable: false },
         { text: 'DESCRIPCIÓN DEL CONTACTO', align: 'left', value: 'description', sortable: false },
@@ -200,12 +212,29 @@ export default {
     }
   },
 
+  computed: {
+    isSuperadmin () {
+      return this.$store.state.admin.role === 'superadmin'
+    },
+    isAdmin () {
+      return this.$store.state.admin.role === 'admin'
+    },
+    isValidador () {
+      return this.$store.state.admin.role === 'validador'
+    },
+    isConsulta () {
+      return this.$store.state.admin.role === 'consulta'
+    }
+  },
+
   created () {
     this.periodId = this.$route.query.periodId
     this.tableOrigin = this.$route.query.tableOrigin
+    this.adminId = this.$store.state.admin?.id || null
 
     if (!this.periodId || !this.tableOrigin) {
-      this.$router.push({ name: 'periods' })
+      this.$router.push('/admin/periods')
+      this.mostrarAlerta('red', 'error', 'PERIODO O TABLA DE ORIGEN NO ESPECIFICADOS')
     } else {
       this.getPeriodInfo(this.periodId)
       this.getUserContact(this.periodId)
@@ -323,7 +352,9 @@ export default {
 
     // CARGAR USUARIOS A CONTACTAR
     async getUserContact (periodId) {
-      const url = `/contacts/get-contacts-by-period/${periodId}`
+      const adminRole = this.$store.state.admin.role
+      const adminId = this.$store.state.admin.id
+      const url = `/contacts/get-contacts-by-period/${periodId}?role=${adminRole}&adminId=${adminId}`
       try {
         const res = await this.$axios.get(url)
         if (res.data.success) {
@@ -371,6 +402,7 @@ export default {
 
     async updateContact (data) {
       const url = '/contacts/update-contact'
+      data.lastAdminId = this.adminId
       try {
         const res = await this.$axios.patch(url, data)
         if (res.data.success) {
@@ -433,6 +465,7 @@ export default {
     // EDITAR ACTIVIDAD
     async updateActivity (activityData) {
       const url = `/activities/update-activity/${activityData.id}`
+      activityData.lastAdminId = this.adminId
       try {
         const res = await this.$axios.put(url, activityData)
         if (res.data.success) {

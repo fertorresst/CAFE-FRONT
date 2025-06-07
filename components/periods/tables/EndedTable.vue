@@ -52,12 +52,29 @@
               color="success"
               v-bind="attrs"
               v-on="on"
-              @click="emit(item, 'downloadTable')"
+              @click="emit(item, 'downloadExcelTable')"
             >
-              mdi-download
+              mdi-file-excel
             </v-icon>
           </template>
-          <span>DESCARGAR REPORTE</span>
+          <span>DESCARGAR EXCEL</span>
+        </v-tooltip>
+
+        <v-tooltip
+          color="red"
+          bottom
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              color="red"
+              v-bind="attrs"
+              v-on="on"
+              @click="emit(item, 'downloadPDFTable')"
+            >
+              mdi-file-pdf-box
+            </v-icon>
+          </template>
+          <span>DESCARGAR PDF</span>
         </v-tooltip>
       </div>
     </template>

@@ -1,9 +1,9 @@
 <!-- layouts/empty.vue -->
 <template style="overflow: hidden;">
-  <div>
+  <v-app data-app>
     <Nuxt />
     <ui-alert v-if="showAlert" />
-  </div>
+  </v-app>
 </template>
 
 <script>
@@ -20,7 +20,6 @@ export default {
   computed: {
     ...mapState({
       showAlert: state => state.showAlert
-      // token: state => state.token
     })
   },
 
@@ -31,7 +30,7 @@ export default {
   methods: {
     mostrarAlerta (color, type, message) {
       this.$store.commit('modifyAlert', true)
-      this.$store.commit('modifyColor', `${color} darken-4`)
+      this.$store.commit('modifyColor', `${color} lighten-2`)
       this.$store.commit('modifyIcon', color === 'green' ? 'mdi-check-circle' : 'mdi-close-circle')
       this.$store.commit('modifyType', type)
       this.$store.commit('modifyText', message)
@@ -42,3 +41,6 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+</style>

@@ -16,20 +16,19 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title class="white--text">
-              {{ adminData.name.toUpperCase() || '' }}
-              {{ adminData.lastName.toUpperCase() || '' }}
-              {{ adminData.secondLastName.toUpperCase() || '' }}
+              {{ studentData.name.toUpperCase() || '' }}
+              {{ studentData.lastName.toUpperCase() || '' }}
+              {{ studentData.secondLastName.toUpperCase() || '' }}
             </v-list-item-title>
             <v-list-item-subtitle class="white--text text--disabled">
-              {{ adminData.email }}
+              {{ studentData.email }}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
 
         <hr>
-
         <v-list-item
-          v-for="(item, i) in filteredItems"
+          v-for="(item, i) in items"
           :key="i"
           :to="item.to"
           class="white--text"
@@ -52,8 +51,8 @@
       color="#07538a"
       class="white--text"
       fixed
-      app
       dense
+      app
     >
       <v-row class="d-flex align-center justify-center flex-row" no-gutters>
         <v-col cols="4" class="d-flex justify-start">
@@ -125,28 +124,22 @@ export default {
       fixed: false,
       items: [
         {
+          icon: 'mdi-home',
+          title: 'INICIO',
+          to: '/student/index'
+        },
+        {
           icon: 'mdi-account',
           title: 'MI PERFIL',
-          to: '/admin/profile'
+          to: '/student/profile'
         },
         {
-          icon: 'mdi-calendar-multiple',
-          title: 'PERIODOS',
-          to: '/admin/periods'
-        },
-        {
-          icon: 'mdi-badge-account',
-          title: 'ADMINS',
-          to: '/admin/admins'
-        },
-        {
-          icon: 'mdi-account-multiple',
-          title: 'ALUMNOS',
-          to: '/admin/students'
+          icon: 'mdi-book-open-page-variant',
+          title: 'MIS ACTIVIDADES',
+          to: '/student/dashboard'
         }
       ],
-
-      adminData: {
+      studentData: {
         name: '',
         lastName: '',
         secondLastName: '',
@@ -158,42 +151,27 @@ export default {
   computed: {
     ...mapState({
       showAlert: state => state.showAlert,
-      admin: state => state.admin
-    }),
-    isSuperadmin () {
-      return this.admin.role === 'superadmin'
-    },
-    isAdmin () {
-      return this.admin.role === 'admin'
-    },
-    isValidador () {
-      return this.admin.role === 'validador'
-    },
-    isConsulta () {
-      return this.admin.role === 'consulta'
-    },
-    filteredItems () {
-      // Only show 'ADMINS' if user is superadmin
-      return this.items.filter(item => item.title !== 'ADMINS' || this.isSuperadmin)
-    }
+      student: state => state.user
+    })
   },
+
   watch: {
     showAlert () {}
   },
 
   created () {
-    const adminId = this.$store.state.admin?.id
-    if (adminId) {
-      this.fetchAdminData(adminId)
+    const studentId = this.$store.state.user?.id
+    if (studentId) {
+      this.fetchStudentData(studentId)
     }
   },
 
   methods: {
     async logout () {
       try {
-        const res = await this.$axios.post('/admin/logout', {}, { withCredentials: true })
+        const res = await this.$axios.post('/users/logout', {}, { withCredentials: true })
         if (res.data.success) {
-          this.$router.push('/admin/login')
+          this.$router.push('/student/login')
           this.mostrarAlerta('green', 'success', 'SESIÓN CERRADA CORRECTAMENTE.')
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)
@@ -205,7 +183,7 @@ export default {
 
     async isLoggedIn () {
       try {
-        await this.$axios.get('/admin/me', { withCredentials: true })
+        await this.$axios.get('/users/me', { withCredentials: true })
         return true
       } catch (e) {
         return false
@@ -223,17 +201,17 @@ export default {
       }, 3000)
     },
 
-    async fetchAdminData (adminId) {
+    async fetchStudentData (studentId) {
       try {
-        const res = await this.$axios.get(`/admin/get-admin/${adminId}`, { withCredentials: true })
+        const res = await this.$axios.get(`/users/get-user/${studentId}`, { withCredentials: true })
         if (res.data && res.data.success) {
-          this.$store.commit('setAdmin', res.data.admin)
-          this.adminData = res.data.admin // Guarda los datos del admin
+          this.$store.commit('setUser', res.data.user)
+          this.studentData = res.data.user // Guarda los datos del admin
         } else {
-          this.$store.commit('setAdmin', {}) // Limpia si no hay datos
+          this.$store.commit('setUser', {}) // Limpia si no hay datos
         }
       } catch (e) {
-        this.$store.commit('setAdmin', {}) // Limpia si hay error
+        this.$store.commit('setUser', {}) // Limpia si hay error
         // Puedes mostrar una alerta si lo deseas
       }
     }

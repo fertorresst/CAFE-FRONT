@@ -60,7 +60,7 @@
           </h1>
         </div>
         <activities-actions
-          v-if="!editFlag"
+          v-if="!editFlag && !isConsulta"
           :key="activity.id + '-' + activity.status"
           :activity="activity"
           :table-origin="tableOrigin"
@@ -100,7 +100,7 @@
           OBSERVACIONES:
         </strong>
         <span v-if="activity.observations">
-          {{ activity.observations.toUpperCase() }}
+          ({{ activity.lastAdminId }}) {{ activity.observations.toUpperCase() }}
         </span>
       </v-col>
     </v-row>
@@ -210,6 +210,21 @@ export default {
       type: Function,
       required: true,
       default: moment
+    }
+  },
+
+  computed: {
+    isSuperadmin () {
+      return this.$store.state.admin.role === 'superadmin'
+    },
+    isAdmin () {
+      return this.$store.state.admin.role === 'admin'
+    },
+    isValidador () {
+      return this.$store.state.admin.role === 'validador'
+    },
+    isConsulta () {
+      return this.$store.state.admin.role === 'consulta'
     }
   },
 

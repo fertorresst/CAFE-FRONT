@@ -93,7 +93,7 @@
           <h3>
             ÁREA
           </h3>
-          <v-combobox
+          <v-select
             v-model="editActivity.area"
             :items="areas"
             flat

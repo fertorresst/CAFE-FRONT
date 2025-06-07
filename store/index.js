@@ -5,13 +5,8 @@ export const state = () => ({
   showAlert: false,
   mensaje: '',
 
-  user: {
-    id: 1
-  },
-  admin: {
-    id: 1
-  },
-  token: null
+  user: {},
+  admin: {}
 })
 
 export const getters = {
@@ -44,7 +39,7 @@ export const mutations = {
   setUser (state, user) {
     state.user = user
   },
-  setToken (state, token) {
-    state.token = token
+  setAdmin (state, admin) {
+    state.admin = admin
   }
 }

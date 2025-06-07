@@ -196,7 +196,7 @@
                     <h3>
                       ÁREA
                     </h3>
-                    <v-combobox
+                    <v-select
                       v-model="currentActivityData.area"
                       :items="areas"
                       flat

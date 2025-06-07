@@ -29,7 +29,9 @@
           </v-card-text>
           <v-card-text>
             <h4 style="color: white;">
-              Introduce tus credenciales de administrador
+              Introduce tus credenciales de MiCAFÉ
+              <br>
+              Estas credenciales son diferentes a las de tu cuenta de institucional.
             </h4>
           </v-card-text>
           <v-card-text>
@@ -73,23 +75,57 @@
               </v-btn>
             </v-form>
           </v-card-text>
+
+          <v-card-text>
+            <h4 style="color: white;">
+              ¿Aún no tienes cuenta en MiCAFÉ?
+            </h4>
+            <v-btn
+              color="#fed55e"
+              rounded
+              elevation="0"
+              text
+              @click="registerDialog()"
+            >
+              <v-icon left>
+                mdi-account-plus
+              </v-icon>
+              <strong>REGÍSTRATE</strong>
+            </v-btn>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+
+    <StudentRegisterDialog
+      :key="dialogsKey.register"
+      v-model="dialogRegister"
+      @action="decoder"
+    />
   </v-container>
 </template>
 
 <script>
 import { mapState } from 'vuex'
+import StudentRegisterDialog from '../../../components/student/dialogs/StudentRegisterDialog'
 
 export default {
+  components: { StudentRegisterDialog },
+
   layout: 'empty',
 
   data () {
     return {
       email: '',
       password: '',
-      valid: true
+      valid: true,
+
+      dialogsKey: {
+        register: 0
+      },
+
+      // DIALOG DE REGISTRO
+      dialogRegister: false
     }
   },
 
@@ -106,10 +142,10 @@ export default {
   async created () {
     try {
       // Intenta obtener los datos del usuario logueado
-      const res = await this.$axios.get('/admin/me', { withCredentials: true })
+      const res = await this.$axios.get('/users/me', { withCredentials: true })
       if (res.data && res.data.success) {
         // Si ya está logueado, redirige al dashboard
-        this.$router.push('/admin/periods')
+        this.$router.push('/student/dashboard')
       }
     } catch (e) {
       // Si no está logueado, no hace nada y permite mostrar el login
@@ -129,27 +165,66 @@ export default {
       }, 3000)
     },
 
+    decoder (data) {
+      console.log('🚀 ~ decoder ~ data:', data)
+      switch (data.action) {
+        case 'cancel':
+          this.dialogRegister = false
+          break
+        case 'createUser':
+          this.createUser(data.data)
+          this.clean()
+          break
+        default:
+          break
+      }
+    },
+
+    clean () {
+      this.email = ''
+      this.password = ''
+      this.dialogRegister = false
+      this.dialogsKey.register++
+    },
+
     async login () {
       try {
-        const res = await this.$axios.post('/admin/login', {
+        const res = await this.$axios.post('/users/login', {
           email: this.email,
           password: this.password
         }, { withCredentials: true })
         if (res.data.success) {
-          console.log('🚀 ~ login ~ res.data:', res.data)
-          this.$router.push('/admin/periods')
+          this.$router.push('/student/dashboard')
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL INICIAR SESIÓN. VERIFICA TUS CREDENCIALES.')
       }
+    },
+
+    registerDialog () {
+      this.dialogRegister = true
+    },
+
+    async createUser (data) {
+      try {
+        const res = await this.$axios.post('/users/create-user', data)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.clean()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message)
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.')
+      }
     }
   }
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .login-center {
   position: absolute;
   top: 50%;
@@ -158,7 +233,7 @@ export default {
 }
 
 .login-card {
-  background-color: #a3915f;
+  background-color: #07538a;
   padding: 20px;
   border-radius: 20px;
 }

@@ -11,7 +11,7 @@
     >
       <v-card-text class="bg-blue white--text py-4">
         <h2>
-          REGISTRAR NUEVO ADMINISTRADOR
+          REGISTRARSE
         </h2>
       </v-card-text>
 
@@ -54,6 +54,47 @@
                 type="text"
                 outlined
                 dense
+              />
+            </v-col>
+          </v-row>
+
+          <v-row align="end">
+            <v-col lg="4" md="4" sm="12" xs="12" class="col-full-xs">
+              <h3>NUA</h3>
+              <v-text-field
+                v-model="nua"
+                :rules="[requiredRule]"
+                type="text"
+                outlined
+                dense
+                required
+              />
+            </v-col>
+
+            <v-col lg="4" md="4" sm="12" xs="12" class="col-full-xs">
+              <h3>SEDE</h3>
+              <v-select
+                v-model="sede"
+                :items="sedesItems"
+                :rules="[requiredRule]"
+                outlined
+                dense
+                required
+              />
+            </v-col>
+
+            <v-col lg="4" md="4" sm="12" xs="12" class="col-full-xs">
+              <h3>CARRERA</h3>
+              <v-select
+                v-model="career"
+                :items="sede === 'SALAMANCA' ? careerItems.salamanca : careerItems.yuriria"
+                item-text="text"
+                item-value="value"
+                :rules="[requiredRule]"
+                outlined
+                dense
+                :disabled="!sede"
+                required
               />
             </v-col>
           </v-row>
@@ -108,45 +149,6 @@
               />
             </v-col>
           </v-row>
-
-          <v-row align="center">
-            <v-col lg="4" md="4" sm="12" xs="12" class="col-full-xs">
-              <h3>ROL</h3>
-              <v-select
-                v-model="role"
-                :items="roles"
-                :rules="[requiredRule]"
-                outlined
-                dense
-                required
-                item-text="label"
-                item-value="value"
-              />
-            </v-col>
-
-            <v-col lg="8" md="8" sm="12" xs="12" class="col-full-xs">
-              <v-alert
-                border="left"
-                color="info"
-                class="text-left mb-4"
-                dense
-                outlined
-              >
-                <v-icon color="yellow darken-2" small>
-                  mdi-crown
-                </v-icon> <strong>SUPERADMIN:</strong> Acceso total, gestiona todo el sistema.<br>
-                <v-icon color="blue darken-2" small>
-                  mdi-account-tie
-                </v-icon> <strong>ADMIN:</strong> Gestiona periodos, usuarios y actividades.<br>
-                <v-icon color="green darken-2" small>
-                  mdi-check-decagram
-                </v-icon> <strong>VALIDADOR:</strong> Valida actividades y gestiona contactos.<br>
-                <v-icon color="grey darken-2" small>
-                  mdi-eye
-                </v-icon> <strong>CONSULTA:</strong> Solo consulta actividades y periodos.
-              </v-alert>
-            </v-col>
-          </v-row>
         </v-form>
       </v-card-text>
 
@@ -163,7 +165,7 @@
           color="#fed55e"
           rounded
           elevation="0"
-          @click="createAdmin()"
+          @click="createUser()"
         >
           <strong>REGISTRAR</strong>
         </v-btn>
@@ -191,14 +193,28 @@ export default {
       name: '',
       lastName: '',
       secondLastName: '',
+      nua: '',
+      career: '',
+      sede: '',
       phone: '',
-      role: '',
-      roles: [
-        { label: 'SUPERADMIN', value: 'superadmin', icon: 'mdi-crown', color: 'yellow darken-2' },
-        { label: 'ADMIN', value: 'admin', icon: 'mdi-account-tie', color: 'blue darken-2' },
-        { label: 'VALIDADOR', value: 'validador', icon: 'mdi-check-decagram', color: 'green darken-2' },
-        { label: 'CONSULTA', value: 'consulta', icon: 'mdi-eye', color: 'grey darken-2' }
-      ]
+      sedesItems: ['SALAMANCA', 'YURIRIA'],
+      careerItems: {
+        salamanca: [
+          { value: 'IS75LI0103', text: 'LICENCIATURA EN INGENIERÍA MECÁNICA' },
+          { value: 'IS75LI0203', text: 'LICENCIATURA EN INGENIERÍA ELÉCTRICA' },
+          { value: 'IS75LI0303', text: 'LICENCIATURA EN INGENIERÍA EN COMUNICACIONES Y ELECTRÓNICA' },
+          { value: 'IS75LI0403', text: 'LICENCIATURA EN INGENIERÍA EN MECATRÓNICA' },
+          { value: 'IS75LI0502', text: 'LICENCIATURA EN INGENIERÍA EN SISTEMAS COMPUTACIONALES' },
+          { value: 'IS75LI0602', text: 'LICENCIATURA EN GESTIÓN EMPRESARIAL' },
+          { value: 'IS75LI0702', text: 'LICENCIATURA EN ARTES DIGITALES' },
+          { value: 'IS75LI0801', text: 'LICENCIATURA EN INGENIERÍA DE DATOS E INTELIGENCIA ARTIFICIAL' }
+        ],
+        yuriria: [
+          { value: 'IS75LI03Y3', text: 'LICENCIATURA EN INGENIERÍA EN COMUNICACIONES Y ELECTRÓNICA' },
+          { value: 'IS75LI05Y2', text: 'LICENCIATURA EN INGENIERÍA EN SISTEMAS COMPUTACIONALES' },
+          { value: 'IS75LI06Y2', text: 'LICENCIATURA EN GESTIÓN EMPRESARIAL' }
+        ]
+      }
     }
   },
   computed: {
@@ -237,7 +253,7 @@ export default {
   },
 
   methods: {
-    createAdmin () {
+    createUser () {
       if (!this.validForm) { return }
       const data = {
         email: this.email,
@@ -246,10 +262,11 @@ export default {
         lastName: this.lastName,
         secondLastName: this.secondLastName,
         phone: this.phone,
-        role: this.role
+        nua: this.nua,
+        career: this.career,
+        sede: this.sede
       }
-      console.log('🚀 ~ createAdmin ~ data:', data)
-      this.$emit('action', { data, action: 'createAdmin' })
+      this.$emit('action', { data, action: 'createUser' })
     },
 
     cancel () {
@@ -264,7 +281,9 @@ export default {
       this.lastName = ''
       this.secondLastName = ''
       this.phone = ''
-      this.role = ''
+      this.nua = ''
+      this.sede = ''
+      this.career = ''
       this.$emit('action', { action: 'cancel' })
     },
 
@@ -280,7 +299,9 @@ export default {
       this.lastName = ''
       this.secondLastName = ''
       this.phone = ''
-      this.role = ''
+      this.nua = ''
+      this.sede = ''
+      this.career = ''
     }
   }
 }
