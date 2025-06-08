@@ -83,7 +83,7 @@ export default {
         'show-select': true
       },
 
-      areas: ['DP', 'RS', 'CEE', 'FCI', 'AC'],
+      areas: ['DP/VSS', 'RS/VCI', 'CEE/EIE', 'FCI/ICP', 'AC'],
 
       // REGLAS
       dateEndRule: (value, dateStart) => {

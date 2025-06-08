@@ -26,7 +26,8 @@
             class="text-left subtitle mt-4"
             style="color: #07538a"
           >
-            {{ contactToInfo.user.name.toUpperCase() }}
+            {{ contactToInfo.id }} |
+            {{ contactToInfo.description.toUpperCase() }}
           </strong>
         </h3>
       </v-card-text>
@@ -34,6 +35,11 @@
       <v-card-text
         class="text-left black--text"
       >
+        <strong>NOMBRE DEL ALUMNO:</strong>
+        <span>{{ contactToInfo.user.name.toUpperCase() }}</span>
+
+        <br>
+
         <strong>NUA:</strong>
         <span>{{ contactToInfo.user.nua }}</span>
 
@@ -49,8 +55,8 @@
         <br>
         <br>
 
-        <strong>TIPO DE ACTIVIDAD:</strong>
-        <span>{{ getActivityType(contactToInfo.relatedItem.type) }}</span>
+        <strong>ID DE LA ACTIVIDAD:</strong>
+        <span>{{ contactToInfo.relatedItem.id }}</span>
 
         <br>
 
@@ -65,7 +71,7 @@
         <br>
         <br>
 
-        <strong>ESTADO:</strong>
+        <strong>ESTADO DEL CONTACTO:</strong>
         <v-icon
           v-if="contactToInfo.status === 'resolved'"
           color="success"
@@ -124,19 +130,24 @@
 
         <br>
 
-        <strong>CREACIÓN:</strong>
+        <strong>CREACIÓN DEL CONTACTO:</strong>
         <span>{{ moment(contactToInfo.createdAt).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
 
         <br>
+        <br>
 
-        <strong>ÚLTIMA ACTUALIZACIÓN:</strong>
+        <strong>ÚLTIMA ACTUALIZACIÓN POR:</strong>
+        <span v-if="contactToInfo.admin.name">{{ contactToInfo.admin.name.toUpperCase() }}</span>
+
+        <br>
+
+        <strong>FECHA DE ÚLTIMA ACTUALIZACIÓN:</strong>
         <span>{{ moment(contactToInfo.updatedAt).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
 
         <br>
-        <br>
 
         <strong>ÚLTIMAS OBSERVACIONES:</strong>
-        <span v-if="contactToInfo.observations">{{ contactToInfo.observations.toUpperCase() }}</span>
+        <span v-if="contactToInfo.observations">({{ contactToInfo.admin.id }}) {{ contactToInfo.observations.toUpperCase() }}</span>
       </v-card-text>
 
       <v-card-actions
@@ -188,14 +199,6 @@ export default {
       }
 
       return statusMap[status] || status
-    },
-
-    getActivityType (type) {
-      const typeMap = {
-        collective: 'ACTIVIDAD COLECTIVA'
-      }
-
-      return typeMap[type] || type
     },
 
     close () {

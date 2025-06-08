@@ -99,7 +99,6 @@
       v-if="dialogUpdateContact"
       :contact-to-update="contactToUpdate"
       :required-rule="requiredRule"
-      :validate-password="validatePassword"
       :mostrar-alerta="mostrarAlerta"
       @action="decoder"
     />
@@ -204,7 +203,7 @@ export default {
       activityId: null,
       activity: {},
 
-      areas: ['DP', 'RS', 'CEE', 'FCI', 'AC'],
+      areas: ['DP/VSS', 'RS/VCI', 'CEE/EIE', 'FCI/ICP', 'AC'],
 
       // ACTIVIDADES INDIVIDUALES
       activities: [],
@@ -280,9 +279,24 @@ export default {
           this.deleteContact(data.data.contactId)
           this.changeStatusActivity(data.data.activityId, { status: 'pending' })
           break
-        case 'updateContact':
-          this.updateContact(data.data)
+        case 'updateContact': {
+          const dataContact = {
+            id: data.data.idContact,
+            observations: data.data.observations,
+            status: data.data.statusContact,
+            lastAdminId: this.adminId
+          }
+          this.updateContact(dataContact)
+
+          const dataActivity = {
+            observations: data.data.observations,
+            status: data.data.statusActivity,
+            lastAdminId: this.adminId
+          }
+          const params = data.data.idActivity
+          this.changeStatusActivity(params, dataActivity)
           break
+        }
         case 'createContactDialog':
           this.createContactDialog(data.alum.id, data.activity)
           break
@@ -402,7 +416,6 @@ export default {
 
     async updateContact (data) {
       const url = '/contacts/update-contact'
-      data.lastAdminId = this.adminId
       try {
         const res = await this.$axios.patch(url, data)
         if (res.data.success) {

@@ -114,7 +114,6 @@
       v-if="dialogDeletePeriod"
       :period-to-delete="periodToDelete"
       :required-rule="requiredRule"
-      :validate-password="validatePassword"
       :mostrar-alerta="mostrarAlerta"
       @action="decoder"
     />
@@ -128,7 +127,6 @@
       :date-end-rule="dateEndRule"
       :date-range="dateRange"
       :min-date-start="minDateStart"
-      :validate-password="validatePassword"
       :mostrar-alerta="mostrarAlerta"
       :moment="moment"
       @action="decoder"
@@ -142,7 +140,6 @@
       :title-new-status="titleNewStatus"
       :moment="moment"
       :required-rule="requiredRule"
-      :validate-password="validatePassword"
       :mostrar-alerta="mostrarAlerta"
       @action="decoder"
     />

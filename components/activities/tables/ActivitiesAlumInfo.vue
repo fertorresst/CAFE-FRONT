@@ -76,7 +76,8 @@ export default {
         IS75LI0602: 'LGE',
         IS75LI06Y2: 'LGE-Y',
         IS75LI0702: 'LAD',
-        IS75LI0801: 'LIDIA'
+        IS75LI0801: 'LIDIA',
+        IS75LI08Y2: 'LEI-Y'
       }
     }
   },

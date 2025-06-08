@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="show"
-    max-width="550"
+    max-width="750"
     persistent
   >
     <v-card
@@ -34,92 +34,207 @@
         class="text-left black--text mb-0 pb-0"
       >
         <div class="text-left black--text">
-          <strong>NUA:</strong>
-          <span>{{ contactToUpdate.user.nua }}</span>
+          <v-row>
+            <v-col cols="5">
+              <strong>NUA:</strong>
+              <span>{{ contactToUpdate.user.nua }}</span>
 
-          <br>
-          <strong>CORREO:</strong>
-          <span>{{ contactToUpdate.user.email }}</span>
+              <br>
 
-          <br>
+              <strong>NOMBRE:</strong>
+              <span>{{ contactToUpdate.user.name.toUpperCase() }}</span>
 
-          <strong>TELÉFONO:</strong>
-          <span>{{ formatPhone(contactToUpdate.user.phone) }}</span>
+              <br>
 
-          <br>
-          <br>
+              <strong>CORREO:</strong>
+              <span>{{ contactToUpdate.user.email }}</span>
 
-          <strong>TIPO DE ACTIVIDAD:</strong>
-          <span>{{ getActivityType(contactToUpdate.relatedItem.type) }}</span>
+              <br>
 
-          <br>
+              <strong>TELÉFONO:</strong>
+              <span>{{ formatPhone(contactToUpdate.user.phone) }}</span>
+            </v-col>
 
-          <strong>NOMBRE DE LA ACTIVIDAD:</strong>
-          <span>{{ contactToUpdate.relatedItem.name.toUpperCase() }}</span>
+            <v-col cols="7">
+              <strong>NOMBRE DE LA ACTIVIDAD:</strong>
+              <span>{{ contactToUpdate.relatedItem.name.toUpperCase() }}</span>
 
-          <br>
+              <br>
 
-          <strong>MOTIVO DEL CONTACTO:</strong>
-          <span>{{ contactToUpdate.description.toUpperCase() }}</span>
+              <strong>MOTIVO DEL CONTACTO:</strong>
+              <span>{{ contactToUpdate.description.toUpperCase() }}</span>
 
-          <br>
+              <br>
 
-          <strong>ÚLTIMAS OBSERVACIONES:</strong>
-          <span v-if="contactToUpdate.observations">{{ contactToUpdate.observations.toUpperCase() }}</span>
+              <strong>ÚLTIMAS OBSERVACIONES:</strong>
+              <span v-if="contactToUpdate.observations">({{ contactToUpdate.admin.id }}) {{ contactToUpdate.observations.toUpperCase() }}</span>
+            </v-col>
+          </v-row>
         </div>
 
-        <v-form
-          ref="form"
-          v-model="validForm"
-          lazy-validation
-          class="pt-6 black--text text-center"
-        >
-          <h3>NUEVAS OBSERVACIONES</h3>
-          <v-textarea
-            v-model="newObservations"
-            :rules="[requiredRule]"
-            auto-grow
-            rows="2"
-            flat
-            outlined
-            dense
-            type="text"
-            required
-          />
-
-          <h3>SELECCIONA UN ESTADO</h3>
-          <v-select
-            v-model="newStatus"
-            :rules="[requiredRule]"
-            :items="statusOptions"
-            item-text="text"
-            hide-selected
-            outlined
-            dense
-            required
+        <div class="d-flex flex-row align-center justify-center mt-4">
+          <v-stepper
+            v-model="step"
+            vertical
+            tile
+            elevation="0"
+            class="rounded-xl mt-4"
+            max-width="450"
           >
-            <template #item="{ item }">
-              <v-list-item-icon>
-                <v-icon :color="item.color">
-                  {{ item.icon }}
-                </v-icon>
-              </v-list-item-icon>
-              <v-list-item-content :class="`${item.color}--text`">
-                <v-list-item-title>{{ item.text }}</v-list-item-title>
-              </v-list-item-content>
-            </template>
+            <v-stepper-step :complete="step > 1" step="1" class="bg-blue" complete-icon="mdi-check white--text" color="bg-yellow black--text">
+              <span class="white--text">ACTUALIZA EL CONTACTO</span>
+              <small class="white--text subtitle">¿QUE SUCEDIÓ CON EL CONTACTO?</small>
+            </v-stepper-step>
 
-            <template #selection="{ item }">
-              <v-icon :color="item.color" class="mr-2">
-                {{ item.icon }}
-              </v-icon>
+            <v-stepper-content step="1">
+              <v-card
+                elevation="0"
+              >
+                <v-form
+                  ref="form"
+                  v-model="validForm"
+                  lazy-validation
+                  class="pt-6 black--text text-center"
+                >
+                  <h3>OBSERVACIONES</h3>
+                  <v-textarea
+                    v-model="newObservations"
+                    :rules="[requiredRule]"
+                    auto-grow
+                    rows="2"
+                    flat
+                    outlined
+                    dense
+                    type="text"
+                    required
+                  />
 
-              <span :class="`${item.color}--text`">
-                {{ item.text }}
-              </span>
-            </template>
-          </v-select>
-        </v-form>
+                  <h3>SELECCIONA UN ESTADO PARA ESTE CONTACTO</h3>
+                  <v-select
+                    v-model="newStatusContact"
+                    :rules="[requiredRule]"
+                    :items="statusOptionsContact"
+                    item-text="text"
+                    hide-selected
+                    outlined
+                    dense
+                    required
+                  >
+                    <template #item="{ item }">
+                      <v-list-item-icon>
+                        <v-icon :color="item.color">
+                          {{ item.icon }}
+                        </v-icon>
+                      </v-list-item-icon>
+                      <v-list-item-content :class="`${item.color}--text`">
+                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                      </v-list-item-content>
+                    </template>
+
+                    <template #selection="{ item }">
+                      <v-icon :color="item.color" class="mr-2">
+                        {{ item.icon }}
+                      </v-icon>
+
+                      <span :class="`${item.color}--text`">
+                        {{ item.text }}
+                      </span>
+                    </template>
+                  </v-select>
+                </v-form>
+
+                <v-card-actions
+                  class="d-flex justify-center py-6"
+                >
+                  <v-btn
+                    :disabled="!newObservations || !newStatusContact"
+                    color="#fed55e"
+                    rounded
+                    elevation="0"
+                    @click="step = 2"
+                  >
+                    <strong>CONTINUAR</strong>
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-stepper-content>
+
+            <v-stepper-step :complete="step > 2" step="2" class="bg-blue" complete-icon="mdi-check white--text" color="bg-yellow black--text">
+              <span class="white--text">ACTUALIZA LA ACTIVIDAD</span>
+              <small class="white--text subtitle">¿CUÁL ES EL NUEVO ESTADO DE LA ACTIVIDAD?</small>
+            </v-stepper-step>
+
+            <v-stepper-content step="2">
+              <v-card
+                elevation="0"
+              >
+                <v-form
+                  ref="activityForm"
+                  v-model="validForm"
+                  lazy-validation
+                  class="text-center mt-8"
+                >
+                  <h3>
+                    SELECCIONA UN ESTADO PARA LA ACTIVIDAD DEL CONTACTO
+                  </h3>
+                  <v-select
+                    v-model="newStatusActivity"
+                    :rules="[requiredRule]"
+                    :items="statusOptionsActivity"
+                    item-text="text"
+                    hide-selected
+                    outlined
+                    dense
+                    required
+                  >
+                    <template #item="{ item }">
+                      <v-list-item-icon>
+                        <v-icon :color="item.color">
+                          {{ item.icon }}
+                        </v-icon>
+                      </v-list-item-icon>
+                      <v-list-item-content :class="`${item.color}--text`">
+                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                      </v-list-item-content>
+                    </template>
+
+                    <template #selection="{ item }">
+                      <v-icon :color="item.color" class="mr-2">
+                        {{ item.icon }}
+                      </v-icon>
+
+                      <span :class="`${item.color}--text`">
+                        {{ item.text }}
+                      </span>
+                    </template>
+                  </v-select>
+                </v-form>
+
+                <v-card-actions
+                  class="d-flex justify-center py-6"
+                >
+                  <v-btn
+                    color="black"
+                    rounded
+                    text
+                    @click="stepBack()"
+                  >
+                    <span class="text">REGRESAR</span>
+                  </v-btn>
+
+                  <v-btn
+                    color="#fed55e"
+                    rounded
+                    elevation="0"
+                    @click="updateContact()"
+                  >
+                    <strong>ACTUALIZAR</strong>
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-stepper-content>
+          </v-stepper>
+        </div>
       </v-card-text>
 
       <v-card-actions
@@ -132,14 +247,6 @@
           @click="cancel()"
         >
           <span class="text">CANCELAR</span>
-        </v-btn>
-        <v-btn
-          color="#fed55e"
-          rounded
-          elevation="0"
-          @click="updateContact()"
-        >
-          <strong>ACTUALIZAR</strong>
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -162,21 +269,23 @@ export default {
   data () {
     return {
       show: true,
+      step: 1,
       validForm: false,
-      newStatus: '',
+      newStatusContact: '',
+      newStatusActivity: '',
       newObservations: '',
-      statusOptions: [
+      statusOptionsContact: [
         { text: 'PENDIENTE', icon: 'mdi-alert-circle', color: 'grey' },
         { text: 'CONTACTADO', icon: 'mdi-progress-clock', color: 'warning' },
         { text: 'RESUELTO', icon: 'mdi-check-circle', color: 'success' },
         { text: 'CANCELADO', icon: 'mdi-close-circle', color: 'error' }
+      ],
+      statusOptionsActivity: [
+        { text: 'SEGUIMOS EN CONTACTO', icon: 'mdi-progress-clock', color: 'warning' },
+        { text: 'ACTIVIDAD APROBADA', icon: 'mdi-check-circle', color: 'success' },
+        { text: 'ACTIVIDAD RECHAZADA', icon: 'mdi-close-circle', color: 'error' }
       ]
     }
-  },
-
-  mounted () {
-    const currentStatus = this.getStatusText(this.contactToUpdate.status)
-    this.newStatus = this.statusOptions.find(option => option.text === currentStatus) || this.statusOptions[0]
   },
 
   methods: {
@@ -195,25 +304,17 @@ export default {
       return statusMap[status] || status
     },
 
-    getActivityType (type) {
-      const typeMap = {
-        activity: 'ACTIVIDAD INDIVIDUAL'
-      }
-
-      return typeMap[type] || type
-    },
-
     cancel () {
       if (this.$refs.form) {
         this.$refs.form.reset()
       }
       this.validForm = false
       this.password = ''
-      this.newStatus = ''
+      this.newStatusContact = ''
       this.$emit('action', { action: 'cancel' })
     },
 
-    getBackendStatusCode (statusText) {
+    getBackendStatusCodeContact (statusText) {
       const statusMap = {
         PENDIENTE: 'pending',
         CONTACTADO: 'in_progress',
@@ -223,22 +324,48 @@ export default {
       return statusMap[statusText] || 'pending'
     },
 
+    getBackendStatusCodeActivity (statusText) {
+      const statusMap = {
+        'SEGUIMOS EN CONTACTO': 'contacted',
+        'ACTIVIDAD APROBADA': 'approval',
+        'ACTIVIDAD RECHAZADA': 'rejected'
+      }
+      return statusMap[statusText] || 'error'
+    },
+
     updateContact () {
       const validateForm = this.$refs.form.validate()
 
       if (validateForm) {
-        const id = this.contactToUpdate.id
-        const status = typeof this.newStatus === 'object' ? this.newStatus.text : this.newStatus
-        const statusForBackend = this.getBackendStatusCode(status)
+        const idContact = this.contactToUpdate.id
+        const idActivity = this.contactToUpdate.relatedItem.id
+        const statusContact = typeof this.newStatusContact === 'object' ? this.newStatusContact.text : this.newStatusContact
+        const statusForBackendContact = this.getBackendStatusCodeContact(statusContact)
+
+        const statusActivity = typeof this.newStatusActivity === 'object' ? this.newStatusActivity.text : this.newStatusActivity
+        const statusForBackendActivity = this.getBackendStatusCodeActivity(statusActivity)
 
         const data = {
-          id,
+          idContact,
+          idActivity,
           observations: this.newObservations,
-          status: statusForBackend
+          statusContact: statusForBackendContact,
+          statusActivity: statusForBackendActivity
         }
         this.$emit('action', { action: 'updateContact', data })
 
         this.cancel()
+      }
+    },
+
+    stepBack () {
+      if (this.step > 1) {
+        this.step--
+        this.newStatusActivity = ''
+        if (this.$refs.activityForm) {
+          this.validForm = false
+          this.$refs.activityForm.reset()
+        }
       }
     }
   }

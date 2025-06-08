@@ -212,7 +212,8 @@ export default {
         yuriria: [
           { value: 'IS75LI03Y3', text: 'LICENCIATURA EN INGENIERÍA EN COMUNICACIONES Y ELECTRÓNICA' },
           { value: 'IS75LI05Y2', text: 'LICENCIATURA EN INGENIERÍA EN SISTEMAS COMPUTACIONALES' },
-          { value: 'IS75LI06Y2', text: 'LICENCIATURA EN GESTIÓN EMPRESARIAL' }
+          { value: 'IS75LI06Y2', text: 'LICENCIATURA EN GESTIÓN EMPRESARIAL' },
+          { value: 'IS75LI08Y2', text: 'LICENCIATURA EN ENSEÑANZA DEL INGLÉS' }
         ]
       }
     }
