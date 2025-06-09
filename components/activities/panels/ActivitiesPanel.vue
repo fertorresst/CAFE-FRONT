@@ -8,7 +8,12 @@
       v-for="(alum, index) in activities"
       :key="index"
     >
-      <v-expansion-panel-header class="bg-blue white--text">
+      <v-expansion-panel-header
+          :class="[
+          getHeaderClass(alum),
+          getHeaderTextClass(alum)
+        ]"
+      >
         <h4>{{ alum.nua }} &nbsp;|&nbsp; {{ alum.fullName.toUpperCase() }}</h4>
       </v-expansion-panel-header>
       <v-expansion-panel-content>
@@ -19,6 +24,10 @@
           <v-card-text class="black--text">
             <activities-alum-info
               :alum="alum"
+            />
+            <br>
+            <ActivitiesAreasCountInfo
+              :activities="alum.activities"
             />
           </v-card-text>
         </v-card>
@@ -74,15 +83,27 @@
                   <h3>
                     EVIDENCIAS
                   </h3>
-                  <v-carousel>
+                  <v-carousel content>
                     <v-carousel-item
-                      v-for="(item, i) in activity.evidenceLinks"
+                      v-for="(item, i) in activity.evidenceLinks || []"
                       :key="i"
-                      :src="getEvidenceUrl(item)"
-                      reverse-transition="fade-transition"
-                      transition="fade-transition"
-                      contain
-                    />
+                    >
+                      <div style="position: relative;">
+                        <img
+                          :src="getEvidenceUrl(item)"
+                          class="carousel-img"
+                        />
+                        <v-btn
+                          small
+                          icon
+                          color="primary"
+                          style="position: absolute; top: 10px; right: 10px; z-index: 2;"
+                          @click="openZoom(getEvidenceUrl(item))"
+                        >
+                          <v-icon>mdi-magnify-plus</v-icon>
+                        </v-btn>
+                      </div>
+                    </v-carousel-item>
                   </v-carousel>
                 </v-col>
               </v-row>
@@ -91,16 +112,51 @@
         </v-expansion-panels>
       </v-expansion-panel-content>
     </v-expansion-panel>
+
+    <v-dialog v-model="zoomDialog" max-width="100%" max-height="100%" persistent>
+      <v-card>
+        <v-card-title>
+          <span>Zoom de evidencia</span>
+          <v-spacer />
+          <v-btn icon @click="zoomDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+        </v-card-title>
+        <v-card-text>
+          <div
+            style="position: relative; display: flex; justify-content: center;"
+          >
+            <img
+              :src="zoomImage"
+              ref="zoomImg"
+              style="max-width: 400px; width: 100%;"
+              @mousemove="onZoomMove"
+              @mouseleave="onZoomLeave"
+            />
+            <!-- Lupa dinámica -->
+            <div
+              v-if="zoomCursor.x !== null"
+              :style="zoomLensStyle"
+            >
+              <img
+                :src="zoomImage"
+                :style="zoomedImgStyle"
+              />
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-expansion-panels>
 </template>
 
 <script>
+import ActivitiesAreasCountInfo from '../tables/ActivitiesAreasCountInfo'
 import ActivityEditContent from '../panelContents/ActivityEditContent'
 import ActivityInfoContent from '../panelContents/ActivityInfoContent'
 import ActivitiesAlumInfo from '../tables/ActivitiesAlumInfo'
 
 export default {
   components: {
+    ActivitiesAreasCountInfo,
     ActivityEditContent,
     ActivityInfoContent,
     ActivitiesAlumInfo
@@ -145,9 +201,13 @@ export default {
       activePanel: null, // Para el panel de alumnos
       activeActivityPanel: null, // Para el panel de actividades
       previousPanel: null,
-      previousActivityPanel: null
+      previousActivityPanel: null,
+      zoomDialog: false,
+      zoomImage: '',
+      zoomCursor: { x: 0, y: 0 }
     }
   },
+
   mounted () {
     this.previousPanel = this.activePanel
     this.previousActivityPanel = this.activeActivityPanel
@@ -267,6 +327,84 @@ export default {
       } else {
         this.previousActivityPanel = newIndex
       }
+    },
+
+    getHeaderClass (alum) {
+      const statuses = alum.activities.map(a => a.status)
+      if (statuses.every(s => s === 'pending')) {
+        return 'header-blue'
+      }
+      if (statuses.includes('contacted')) {
+        return 'header-warning'
+      }
+      if (statuses.every(s => ['approval', 'rejected'].includes(s))) {
+        return 'header-success'
+      }
+      return 'header-blue'
+    },
+
+    getHeaderTextClass (alum) {
+      const statuses = alum.activities.map(a => a.status)
+      if (statuses.includes('contacted')) {
+        return 'header-warning-text'
+      }
+      if (statuses.every(s => ['approval', 'rejected'].includes(s))) {
+        return 'header-success-text'
+      }
+      return 'white--text'
+    },
+
+    openZoom (img) {
+      this.zoomImage = img
+      this.zoomDialog = true
+      this.zoomCursor = { x: null, y: null }
+    },
+
+    onZoomMove (e) {
+      const rect = this.$refs.zoomImg.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      this.zoomCursor = { x, y, rect }
+    },
+
+    onZoomLeave () {
+      this.zoomCursor = { x: null, y: null }
+    }
+  },
+
+  computed: {
+    zoomLensStyle () {
+      if (!this.zoomCursor.x) { return {} }
+      const size = 400
+      const left = this.zoomCursor.x - size / 2.5
+      const top = this.zoomCursor.y - size / 2.5
+      return {
+        position: 'absolute',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        border: '2px solid #1976d2',
+        borderRadius: '25%',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        zIndex: 10,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+      }
+    },
+    zoomedImgStyle () {
+      if (!this.zoomCursor.x) { return {} }
+      const size = 120
+      const zoom = 2.5
+      const x = this.zoomCursor.x
+      const y = this.zoomCursor.y
+      return {
+        position: 'absolute',
+        left: `${-x * zoom + size / 2}px`,
+        top: `${-y * zoom + size / 2}px`,
+        width: `${this.zoomCursor.rect.width * zoom}px`,
+        height: `${this.zoomCursor.rect.height * zoom}px`
+      }
     }
   }
 }
@@ -294,5 +432,40 @@ export default {
 
 ::v-deep .v-textarea textarea {
   text-transform: uppercase;
+}
+
+.header-blue {
+  background-color: #07538a !important;
+  color: #fff !important;
+}
+.header-warning {
+  background-color: #FFC107 !important;
+}
+.header-warning-text {
+  color: #222 !important;
+}
+.header-success {
+  background-color: #43a047 !important; /* Verde */
+}
+.header-success-text {
+  color: #e8f5e9 !important; /* Verde muy claro para contraste */
+}
+
+/* Cambia el color del icono de despliegue solo para warning */
+::v-deep .header-warning .v-expansion-panel-header__icon .v-icon {
+  color: #222 !important;
+}
+/* Cambia el color del icono de despliegue solo para success */
+::v-deep .header-success .v-expansion-panel-header__icon .v-icon {
+  color: #e8f5e9 !important;
+}
+
+.carousel-img {
+  width: 780px; /* Ancho máximo de la imagen */
+  height: 500px; /* Puedes ajustar este valor según tu diseño */
+  object-fit: contain;
+  background: #f5f5f5; /* Opcional: para que se note el área vacía */
+  display: block;
+  margin: 0 auto;
 }
 </style>

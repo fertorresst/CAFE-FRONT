@@ -444,6 +444,7 @@ export default {
             this.mostrarAlerta('green', 'success', res.data.message)
           }
           this.activities = res.data.data
+          console.log('🚀 ~ getActivities ~ this.activities:', this.activities)
         } else {
           this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL CARGAR LAS ACTIVIDADES INDIVIDUALES')
         }

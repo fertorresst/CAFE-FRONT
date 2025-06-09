@@ -728,26 +728,30 @@ export default {
         row++
 
         // Horas por área (solo el valor a la izquierda)
+        const areaMap = {
+          'DP/VSS': 'DP',
+          'RS/VCI': 'RS',
+          'CEE/EIE': 'CEE',
+          'FCI/ICP': 'FCI',
+          AC: 'AC'
+        }
         const areaHours = { DP: 0, RS: 0, CEE: 0, FCI: 0, AC: 0 }
-        let totalHoras = 0
         alum.activities.forEach((act) => {
-          if (areaHours[act.act_area] !== undefined) {
-            areaHours[act.act_area] += act.act_hours
-            totalHoras += act.act_hours
+          const key = areaMap[act.act_area]
+          if (key) {
+            areaHours[key] += Number(act.act_hours) || 0
           }
         })
 
-        sheetData.push(['', 'DP', { v: areaHours.DP, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        sheetData.push(['', 'DP/VSS', { v: areaHours.DP, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
         row++
-        sheetData.push(['', 'RS', { v: areaHours.RS, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        sheetData.push(['', 'RS/VCI', { v: areaHours.RS, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
         row++
-        sheetData.push(['', 'CEE', { v: areaHours.CEE, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        sheetData.push(['', 'CEE/EIE', { v: areaHours.CEE, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
         row++
-        sheetData.push(['', 'FCI', { v: areaHours.FCI, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
+        sheetData.push(['', 'FCI/ICP', { v: areaHours.FCI, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
         row++
         sheetData.push(['', 'AC', { v: areaHours.AC, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
-        row++
-        sheetData.push(['', 'TOTAL', { v: totalHoras, s: { alignment: { horizontal: 'left' }, ...blueFill } }])
         row++
         sheetData.push([]) // Fila vacía entre alumnos
         row++
@@ -832,12 +836,18 @@ export default {
         startY += 12
 
         // Horas por área
+        const areaMap = {
+          'DP/VSS': 'DP',
+          'RS/VCI': 'RS',
+          'CEE/EIE': 'CEE',
+          'FCI/ICP': 'FCI',
+          AC: 'AC'
+        }
         const areaHours = { DP: 0, RS: 0, CEE: 0, FCI: 0, AC: 0 }
-        let totalHoras = 0
         alum.activities.forEach((act) => {
-          if (areaHours[act.act_area] !== undefined) {
-            areaHours[act.act_area] += act.act_hours
-            totalHoras += act.act_hours
+          const key = areaMap[act.act_area]
+          if (key) {
+            areaHours[key] += Number(act.act_hours) || 0
           }
         })
 
@@ -846,12 +856,11 @@ export default {
           startY,
           head: [['ÁREA', 'HORAS']],
           body: [
-            ['DP', areaHours.DP],
-            ['RS', areaHours.RS],
-            ['CEE', areaHours.CEE],
-            ['FCI', areaHours.FCI],
-            ['AC', areaHours.AC],
-            ['TOTAL', totalHoras]
+            ['DP/VSS', areaHours.DP],
+            ['RS/VCI', areaHours.RS],
+            ['CEE/EIE', areaHours.CEE],
+            ['FCI/ICP', areaHours.FCI],
+            ['AC', areaHours.AC]
           ],
           theme: 'grid',
           styles: { halign: 'left', fillColor: [254, 213, 94] },
