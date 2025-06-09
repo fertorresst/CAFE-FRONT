@@ -173,6 +173,7 @@ export default {
       headersContact: [
         { text: 'NUA', align: 'left', value: 'user.nua', sortable: true },
         { text: 'NOMBRE', align: 'left', value: 'user.name', sortable: false },
+        { text: 'ACTIVIDAD', align: 'left', value: 'relatedItem.name', sortable: true },
         { text: 'DESCRIPCIÓN DEL CONTACTO', align: 'left', value: 'description', sortable: false },
         { text: 'ESTADO', align: 'center', value: 'status', sortable: true },
         { text: 'ACCIONES', align: 'center', value: 'actions', sortable: false }

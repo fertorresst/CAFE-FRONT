@@ -2,9 +2,37 @@
   <v-col cols="12">
     <v-expansion-panels focusable class="w-100">
       <v-expansion-panel v-for="(period, index) in sendActivities" :key="index">
-        <v-expansion-panel-header class="bg-blue white--text">
-          <h4>{{ period.name.toUpperCase() }}</h4>
+        <v-expansion-panel-header
+          :class=" [
+            'bg-blue',
+            'white--text',
+            hasContactedActivity(period.activities) ? 'contacted-period' : ''
+          ]"
+        >
+          <v-icon
+            v-if="period.status === 'active'"
+            color="white"
+            class="mr-2"
+          >
+            mdi-calendar-check
+          </v-icon>
+          <v-icon
+            v-else-if="period.status === 'ended'"
+            :color="hasContactedActivity(period.activities) ? 'black' : 'white'"
+            class="mr-2"
+          >
+            mdi-calendar-end
+          </v-icon>
+          <v-icon
+            v-else-if="period.status === 'pending'"
+            :color="hasContactedActivity(period.activities) ? 'black' : 'white'"
+            class="mr-2"
+          >
+            mdi-calendar-clock
+          </v-icon>
+          <h4 class="header-title">{{ period.name.toUpperCase() }}</h4>
         </v-expansion-panel-header>
+
         <v-expansion-panel-content>
           <v-card
             flat
@@ -156,11 +184,35 @@ export default {
 
       this.activityDelete = {}
       this.activityDeleteDialog = false
+    },
+
+    hasContactedActivity (activities = []) {
+      // Busca si alguna actividad tiene status 'contacted'
+      return Array.isArray(activities) && activities.some(act => act.status === 'contacted')
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.contacted-period {
+  background-color: #FFC107 !important;
+  color: #000000 !important;
+}
 
+.header-title {
+  flex: 1 1 100%;
+  width: 100%;
+  text-align: left;
+  margin-left: 8px;
+  margin-right: auto;
+}
+
+::v-deep .v-expansion-panel-header__content {
+  justify-content: flex-start !important;
+}
+
+::v-deep .contacted-period .v-expansion-panel-header__icon .v-icon {
+  color: #000 !important;
+}
 </style>

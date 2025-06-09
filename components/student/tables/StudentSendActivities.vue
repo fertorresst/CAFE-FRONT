@@ -85,7 +85,7 @@
           </v-tooltip>
 
           <v-tooltip
-            v-if="periodStatus === 'active'"
+            v-if="periodStatus === 'active' || item.status === 'contacted'"
             color="warning"
             bottom
             class="px-4"

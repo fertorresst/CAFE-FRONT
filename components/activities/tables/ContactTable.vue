@@ -38,6 +38,10 @@
               <span>{{ item.user.name.toUpperCase() }}</span>
             </template>
 
+            <template #[`item.relatedItem.name`]="{ item }">
+              <span>{{ item.relatedItem.name.toUpperCase() }}</span>
+            </template>
+
             <template #[`item.description`]="{ item }">
               <span>{{ item.description.toUpperCase() }}</span>
             </template>

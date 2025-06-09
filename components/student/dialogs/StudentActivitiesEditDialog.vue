@@ -17,12 +17,27 @@
         </h2>
       </v-card-text>
 
-      <v-card-text class="my-3">
+      <v-card-text v-if="activityEdit.observations" class="my-4">
+        <h3
+          class="text-center subtitle black--text"
+        >
+          ULTIMAS OBSERVACIONES:
+          <br>
+          <strong
+            class="text-left subtitle mt-4"
+            style="color: #07538a !important;"
+          >
+            {{ activityEdit.observations.toUpperCase() }}
+          </strong>
+        </h3>
+      </v-card-text>
+
+      <v-card-text :class="activityEdit.observations ? 'mb-2' : 'my-6'">
         <v-form
           ref="activityForm"
           v-model="validForm"
           lazy-validation
-          class="px-6 py-6 black--text"
+          class="px-6 black--text"
         >
           <v-row class="d-flex flex-wrap flex-row justify-center align-end">
             <v-col lg="6" md="6" sm="12">
@@ -515,10 +530,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.subtitle {
-  color: #666;
-  font-size: 0.8rem;
-}
-</style>

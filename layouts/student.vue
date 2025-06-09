@@ -6,6 +6,7 @@
       color="#a3915f"
       fixed
       app
+      :temporary="true"
     >
       <v-list>
         <v-list-item>
@@ -95,13 +96,6 @@
       </v-container>
     </v-main>
 
-    <!-- <v-footer
-      :absolute="!fixed"
-      app
-    >
-      <span>&copy; {{ new Date().getFullYear() }}</span>
-    </v-footer> -->
-
     <ui-alert v-if="showAlert" />
   </v-app>
 </template>
@@ -155,10 +149,6 @@ export default {
     })
   },
 
-  watch: {
-    showAlert () {}
-  },
-
   created () {
     const studentId = this.$store.state.user?.id
     if (studentId) {
@@ -206,13 +196,12 @@ export default {
         const res = await this.$axios.get(`/users/get-user/${studentId}`, { withCredentials: true })
         if (res.data && res.data.success) {
           this.$store.commit('setUser', res.data.user)
-          this.studentData = res.data.user // Guarda los datos del admin
+          this.studentData = res.data.user
         } else {
-          this.$store.commit('setUser', {}) // Limpia si no hay datos
+          this.$store.commit('setUser', {})
         }
       } catch (e) {
-        this.$store.commit('setUser', {}) // Limpia si hay error
-        // Puedes mostrar una alerta si lo deseas
+        this.$store.commit('setUser', {})
       }
     }
   }
@@ -220,5 +209,4 @@ export default {
 </script>
 
 <style scoped>
-
 </style>

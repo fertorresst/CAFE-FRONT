@@ -6,6 +6,7 @@
       color="#a3915f"
       fixed
       app
+      :temporary="true"
     >
       <v-list>
         <v-list-item>
