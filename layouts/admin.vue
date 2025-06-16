@@ -17,9 +17,9 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title class="white--text">
-              {{ adminData.name.toUpperCase() || '' }}
-              {{ adminData.lastName.toUpperCase() || '' }}
-              {{ adminData.secondLastName.toUpperCase() || '' }}
+              {{ adminData.name.toUpperCase() || "" }}
+              {{ adminData.lastName.toUpperCase() || "" }}
+              {{ adminData.secondLastName.toUpperCase() || "" }}
             </v-list-item-title>
             <v-list-item-subtitle class="white--text text--disabled">
               {{ adminData.email }}
@@ -49,19 +49,10 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar
-      color="#07538a"
-      class="white--text"
-      fixed
-      app
-      dense
-    >
+    <v-app-bar color="#07538a" class="white--text" fixed app dense>
       <v-row class="d-flex align-center justify-center flex-row" no-gutters>
         <v-col cols="4" class="d-flex justify-start">
-          <v-app-bar-nav-icon
-            color="#cd7005"
-            @click.stop="drawer = !drawer"
-          />
+          <v-app-bar-nav-icon color="#cd7005" @click.stop="drawer = !drawer" />
         </v-col>
 
         <v-col cols="4" class="d-flex justify-center">
@@ -101,7 +92,7 @@
       :absolute="!fixed"
       app
     >
-      <span>&copy; {{ new Date().getFullYear() }}</span>
+      <span>&copy {{ new Date().getFullYear() }}</span>
     </v-footer> -->
 
     <ui-alert v-if="showAlert" />
@@ -174,10 +165,19 @@ export default {
       return this.admin.role === 'consulta'
     },
     filteredItems () {
-      // Only show 'ADMINS' if user is superadmin
-      return this.items.filter(item => item.title !== 'ADMINS' || this.isSuperadmin)
+      // ADMINS solo para superadmins, ALUMNOS para superadmins y admins
+      return this.items.filter((item) => {
+        if (item.title === 'ADMINS') {
+          return this.isSuperadmin
+        }
+        if (item.title === 'ALUMNOS') {
+          return this.isSuperadmin || this.isAdmin
+        }
+        return true
+      })
     }
   },
+
   watch: {
     showAlert () {}
   },
@@ -192,15 +192,27 @@ export default {
   methods: {
     async logout () {
       try {
-        const res = await this.$axios.post('/admin/logout', {}, { withCredentials: true })
+        const res = await this.$axios.post(
+          '/admin/logout',
+          {},
+          { withCredentials: true }
+        )
         if (res.data.success) {
           this.$router.push('/admin/login')
-          this.mostrarAlerta('green', 'success', 'SESIÓN CERRADA CORRECTAMENTE.')
+          this.mostrarAlerta(
+            'green',
+            'success',
+            'SESIÓN CERRADA CORRECTAMENTE.'
+          )
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
-        this.mostrarAlerta('red', 'error', 'ERROR AL CERRAR SESIÓN. VUELVE A INTENTARLO.')
+        this.mostrarAlerta(
+          'red',
+          'error',
+          'ERROR AL CERRAR SESIÓN. VUELVE A INTENTARLO.'
+        )
       }
     },
 
@@ -216,7 +228,10 @@ export default {
     mostrarAlerta (color, type, message) {
       this.$store.commit('modifyAlert', true)
       this.$store.commit('modifyColor', `${color} lighten-2`)
-      this.$store.commit('modifyIcon', color === 'green' ? 'mdi-check-circle' : 'mdi-close-circle')
+      this.$store.commit(
+        'modifyIcon',
+        color === 'green' ? 'mdi-check-circle' : 'mdi-close-circle'
+      )
       this.$store.commit('modifyType', type)
       this.$store.commit('modifyText', message)
       setTimeout(() => {
@@ -226,15 +241,17 @@ export default {
 
     async fetchAdminData (adminId) {
       try {
-        const res = await this.$axios.get(`/admin/get-admin/${adminId}`, { withCredentials: true })
+        const res = await this.$axios.get(`/admin/get-admin/${adminId}`, {
+          withCredentials: true
+        })
         if (res.data && res.data.success) {
           this.$store.commit('setAdmin', res.data.admin)
-          this.adminData = res.data.admin // Guarda los datos del admin
+          this.adminData = res.data.admin
         } else {
-          this.$store.commit('setAdmin', {}) // Limpia si no hay datos
+          this.$store.commit('setAdmin', {})
         }
       } catch (e) {
-        this.$store.commit('setAdmin', {}) // Limpia si hay error
+        this.$store.commit('setAdmin', {})
         // Puedes mostrar una alerta si lo deseas
       }
     }
@@ -242,6 +259,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

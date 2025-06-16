@@ -12,19 +12,19 @@
             <strong class="black--text">AREA</strong>
           </th>
           <th class="text-center">
-            DP/VSS
+            <strong class="black--text">DP/VSS</strong>
           </th>
           <th class="text-center">
-            RS/VCI
+            <strong class="black--text">RS/VCI</strong>
           </th>
           <th class="text-center">
-            CEE/EIE
+            <strong class="black--text">CEE/EIE</strong>
           </th>
           <th class="text-center">
-            FCI/ICP
+            <strong class="black--text">FCI/ICP</strong>
           </th>
           <th class="text-center">
-            AC
+            <strong class="black--text">AC</strong>
           </th>
         </tr>
       </thead>

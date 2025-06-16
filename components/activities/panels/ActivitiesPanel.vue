@@ -9,7 +9,7 @@
       :key="index"
     >
       <v-expansion-panel-header
-          :class="[
+        :class="[
           getHeaderClass(alum),
           getHeaderTextClass(alum)
         ]"
@@ -92,7 +92,7 @@
                         <img
                           :src="getEvidenceUrl(item)"
                           class="carousel-img"
-                        />
+                        >
                         <v-btn
                           small
                           icon
@@ -118,19 +118,21 @@
         <v-card-title>
           <span>Zoom de evidencia</span>
           <v-spacer />
-          <v-btn icon @click="zoomDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+          <v-btn icon @click="zoomDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-card-title>
         <v-card-text>
           <div
             style="position: relative; display: flex; justify-content: center;"
           >
             <img
-              :src="zoomImage"
               ref="zoomImg"
+              :src="zoomImage"
               style="max-width: 400px; width: 100%;"
               @mousemove="onZoomMove"
               @mouseleave="onZoomLeave"
-            />
+            >
             <!-- Lupa dinámica -->
             <div
               v-if="zoomCursor.x !== null"
@@ -139,7 +141,7 @@
               <img
                 :src="zoomImage"
                 :style="zoomedImgStyle"
-              />
+              >
             </div>
           </div>
         </v-card-text>
@@ -205,6 +207,42 @@ export default {
       zoomDialog: false,
       zoomImage: '',
       zoomCursor: { x: 0, y: 0 }
+    }
+  },
+
+  computed: {
+    zoomLensStyle () {
+      if (!this.zoomCursor.x) { return {} }
+      const size = 400
+      const left = this.zoomCursor.x - size / 2.5
+      const top = this.zoomCursor.y - size / 2.5
+      return {
+        position: 'absolute',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        border: '2px solid #1976d2',
+        borderRadius: '25%',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        zIndex: 10,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+      }
+    },
+    zoomedImgStyle () {
+      if (!this.zoomCursor.x) { return {} }
+      const size = 120
+      const zoom = 2.5
+      const x = this.zoomCursor.x
+      const y = this.zoomCursor.y
+      return {
+        position: 'absolute',
+        left: `${-x * zoom + size / 2}px`,
+        top: `${-y * zoom + size / 2}px`,
+        width: `${this.zoomCursor.rect.width * zoom}px`,
+        height: `${this.zoomCursor.rect.height * zoom}px`
+      }
     }
   },
 
@@ -369,42 +407,6 @@ export default {
 
     onZoomLeave () {
       this.zoomCursor = { x: null, y: null }
-    }
-  },
-
-  computed: {
-    zoomLensStyle () {
-      if (!this.zoomCursor.x) { return {} }
-      const size = 400
-      const left = this.zoomCursor.x - size / 2.5
-      const top = this.zoomCursor.y - size / 2.5
-      return {
-        position: 'absolute',
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${size}px`,
-        height: `${size}px`,
-        border: '2px solid #1976d2',
-        borderRadius: '25%',
-        overflow: 'hidden',
-        pointerEvents: 'none',
-        zIndex: 10,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-      }
-    },
-    zoomedImgStyle () {
-      if (!this.zoomCursor.x) { return {} }
-      const size = 120
-      const zoom = 2.5
-      const x = this.zoomCursor.x
-      const y = this.zoomCursor.y
-      return {
-        position: 'absolute',
-        left: `${-x * zoom + size / 2}px`,
-        top: `${-y * zoom + size / 2}px`,
-        width: `${this.zoomCursor.rect.width * zoom}px`,
-        height: `${this.zoomCursor.rect.height * zoom}px`
-      }
     }
   }
 }
