@@ -79,7 +79,6 @@
             tile
             elevation="0"
             class="rounded-xl mt-4"
-            max-width="450"
           >
             <v-stepper-step :complete="step > 1" step="1" class="bg-blue" complete-icon="mdi-check white--text" color="bg-yellow black--text">
               <span class="white--text">ACTUALIZA EL CONTACTO</span>
@@ -96,7 +95,7 @@
                   lazy-validation
                   class="pt-6 black--text text-center"
                 >
-                  <h3>OBSERVACIONES</h3>
+                  <h3>NUEVAS OBSERVACIONES</h3>
                   <v-textarea
                     v-model="newObservations"
                     :rules="[requiredRule]"
@@ -241,12 +240,12 @@
         class="d-flex justify-center mt-0 pt-0 pb-6"
       >
         <v-btn
-          color="black"
+          color="#fed55e"
           rounded
-          text
+          elevation="0"
           @click="cancel()"
         >
-          <span class="text">CANCELAR</span>
+          <strong class="text">CANCELAR</strong>
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -275,7 +274,6 @@ export default {
       newStatusActivity: '',
       newObservations: '',
       statusOptionsContact: [
-        { text: 'PENDIENTE', icon: 'mdi-alert-circle', color: 'grey' },
         { text: 'CONTACTADO', icon: 'mdi-progress-clock', color: 'warning' },
         { text: 'RESUELTO', icon: 'mdi-check-circle', color: 'success' },
         { text: 'CANCELADO', icon: 'mdi-close-circle', color: 'error' }

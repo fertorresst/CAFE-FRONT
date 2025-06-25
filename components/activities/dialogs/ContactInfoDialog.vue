@@ -27,7 +27,7 @@
             style="color: #07538a"
           >
             {{ contactToInfo.id }} |
-            {{ contactToInfo.description.toUpperCase() }}
+            {{ (contactToInfo.description || '').toUpperCase() }}
           </strong>
         </h3>
       </v-card-text>
@@ -36,7 +36,7 @@
         class="text-left black--text"
       >
         <strong>NOMBRE DEL ALUMNO:</strong>
-        <span>{{ contactToInfo.user.name.toUpperCase() }}</span>
+        <span>{{ (contactToInfo.user.name || '').toUpperCase() }}</span>
 
         <br>
 
@@ -60,15 +60,20 @@
 
         <br>
 
+        <strong>NOMBRE DEL PERIODO:</strong>
+        <span>{{ (contactToInfo.periodName || '').toUpperCase() }}</span>
+
+        <br>
+
         <strong>NOMBRE DE LA ACTIVIDAD:</strong>
-        <span>{{ contactToInfo.relatedItem.name.toUpperCase() }}</span>
+        <span>{{ (contactToInfo.relatedItem.name || '').toUpperCase() }}</span>
 
         <br>
-
-        <strong>MOTIVO DEL CONTACTO:</strong>
-        <span>{{ contactToInfo.description.toUpperCase() }}</span>
-
         <br>
+
+        <strong>ID DEL CONTACTO:</strong>
+        <span>{{ contactToInfo.id }}</span>
+
         <br>
 
         <strong>ESTADO DEL CONTACTO:</strong>
@@ -120,13 +125,13 @@
 
         <br>
 
-        <strong>NOMBRE DEL PERIODO:</strong>
-        <span>{{ contactToInfo.periodName.toUpperCase() }}</span>
+        <strong>MOTIVO DEL CONTACTO:</strong>
+        <span>{{ (contactToInfo.description || '').toUpperCase() }}</span>
 
         <br>
 
         <strong>ADMIN SOLICITADOR:</strong>
-        <span>{{ contactToInfo.admin.name.toUpperCase() }}</span>
+        <span>({{ contactToInfo.admin.id }}) {{ (contactToInfo.admin.name || '').toUpperCase() }}</span>
 
         <br>
 
@@ -137,7 +142,7 @@
         <br>
 
         <strong>ÚLTIMA ACTUALIZACIÓN POR:</strong>
-        <span v-if="contactToInfo.admin.name">{{ contactToInfo.admin.name.toUpperCase() }}</span>
+        <span v-if="contactToInfo.lastAdminName">{{ (contactToInfo.lastAdminName || '').toUpperCase() }}</span>
 
         <br>
 
@@ -147,7 +152,7 @@
         <br>
 
         <strong>ÚLTIMAS OBSERVACIONES:</strong>
-        <span v-if="contactToInfo.observations">({{ contactToInfo.admin.id }}) {{ contactToInfo.observations.toUpperCase() }}</span>
+        <span v-if="contactToInfo.observations">({{ contactToInfo.lastAdminId }}) {{ (contactToInfo.observations || '').toUpperCase() }}</span>
       </v-card-text>
 
       <v-card-actions

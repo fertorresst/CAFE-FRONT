@@ -417,6 +417,7 @@ export default {
 
     async updateContact (data) {
       const url = '/contacts/update-contact'
+      data.lastAdminId = this.adminId
       try {
         const res = await this.$axios.patch(url, data)
         if (res.data.success) {

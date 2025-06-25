@@ -22,13 +22,21 @@
           class="elevation-0 my-2"
         >
           <v-card-text class="black--text">
-            <activities-alum-info
-              :alum="alum"
-            />
-            <br>
-            <ActivitiesAreasCountInfo
-              :activities="alum.activities"
-            />
+            <v-row class="rounded-xl mt-2 text-center" style="border: black; border-width: 1px; border-style: solid;">
+              <v-col cols="12">
+                <activities-alum-info
+                  :alum="alum"
+                />
+              </v-col>
+            </v-row>
+
+            <v-row class="rounded-xl mt-8 text-center" style="border: black; border-width: 1px; border-style: solid;">
+              <v-col cols="12">
+                <ActivitiesAreasCountInfo
+                  :activities="alum.activities"
+                />
+              </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
 

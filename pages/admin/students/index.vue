@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row align="center" justify="center">
       <h1 class="my-5">
-        PERFILES DE ALUMNOS
+        ACTIVIDADES ENVIADAS POR ALUMNO
       </h1>
     </v-row>
 
@@ -11,7 +11,7 @@
         elevation="0"
         class="rounded-pill mb-4"
         color="#fed55e"
-        @click="newStudentDialog()"
+        @click="registerStudentDialog()"
       >
         <strong>REGISTRAR NUEVO ALUMNO</strong>
       </v-btn>
@@ -26,13 +26,12 @@
         prepend-inner-icon="mdi-magnify"
         outlined
         dense
-        style="max-width:600px; width:100%; ba"
+        style="max-width:600px; width:100%;"
       />
     </v-row>
 
     <v-row align="center" justify="center">
       <v-expansion-panels
-        v-model="activePanel"
         focusable
       >
         <v-expansion-panel
@@ -53,18 +52,61 @@
               class="elevation-0 my-2"
             >
               <v-card-text class="black--text">
-                <activities-alum-info
-                  :alum="alum"
-                />
-                <br>
-                <ActivitiesAreasCountInfo
-                  :activities="alum.activities"
-                />
+                <v-row class="rounded-xl mt-2 text-center" style="border: black; border-width: 1px; border-style: solid;">
+                  <v-col cols="12">
+                    <activities-alum-info
+                      :alum="alum"
+                    />
+                  </v-col>
+                </v-row>
+
+                <v-row class="rounded-xl mt-8 text-center" style="border: black; border-width: 1px; border-style: solid;">
+                  <v-col cols="12">
+                    <ActivitiesAreasCountInfo
+                      :activities="alum.activities"
+                    />
+                  </v-col>
+                </v-row>
+
+                <!-- Filtros de actividades por alumno -->
+                <v-row class="mt-12 py-0 px-6 mb-0 justify-center align-center border-top">
+                  <v-col cols="12" sm="4">
+                    <v-text-field
+                      v-model="alum.activityNameFilter"
+                      label="BUSCAR ACTIVIDAD POR NOMBRE"
+                      clearable
+                      prepend-inner-icon="mdi-magnify"
+                      outlined
+                      dense
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="4">
+                    <v-select
+                      v-model="alum.statusFilter"
+                      :items="statusOptions"
+                      label="FILTRAR POR ESTADO"
+                      clearable
+                      outlined
+                      dense
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="4">
+                    <v-select
+                      v-model="alum.areaFilter"
+                      :items="areaOptions"
+                      label="FILTRAR POR ÁREA"
+                      clearable
+                      outlined
+                      dense
+                    />
+                  </v-col>
+                </v-row>
 
                 <StudentAllActivities
-                  :all-activities="alum.activities"
+                  :all-activities="filteredActivities(alum)"
                   :footer-props="footerProps"
                   :moment="moment"
+                  @action="decoder"
                 />
               </v-card-text>
             </v-card>
@@ -72,12 +114,38 @@
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
+
+    <StudentActivityInfoDialog
+      v-model="dialogInfoActivity"
+      :activity-info="activityInfo"
+      :moment="moment"
+      @action="decoder"
+    />
+
+    <StudentRegisterDialog
+      :key="key.registerStudent"
+      v-model="dialogRegisterStudent"
+      @action="decoder"
+    />
+
+    <StudentActivityChangeStatus
+      :key="key.changeStatus"
+      v-model="dialogChangeStatus"
+      :activity-change-status="activityChangeStatus"
+      :areas="areaOptions"
+      :required-rule="requiredRule"
+      :date-end-rule="dateEndRule"
+      @action="decoder"
+    />
   </v-col>
 </template>
 
 <script>
 import moment from 'moment'
 import { mapState } from 'vuex'
+import StudentActivityChangeStatus from '../../../components/student/dialogs/StudentActivityChangeStatus'
+import StudentRegisterDialog from '../../../components/student/dialogs/StudentRegisterDialog'
+import StudentActivityInfoDialog from '../../../components/student/dialogs/StudentActivityInfoDialog'
 import StudentAllActivities from '../../../components/student/tables/StudentAllActivities'
 import ActivitiesAreasCountInfo from '~/components/activities/tables/ActivitiesAreasCountInfo.vue'
 import ActivitiesAlumInfo from '~/components/activities/tables/ActivitiesAlumInfo.vue'
@@ -85,6 +153,9 @@ moment.locale('es')
 
 export default {
   components: {
+    StudentActivityChangeStatus,
+    StudentRegisterDialog,
+    StudentActivityInfoDialog,
     StudentAllActivities,
     ActivitiesAreasCountInfo,
     ActivitiesAlumInfo
@@ -106,9 +177,45 @@ export default {
         'show-rows-per-page': true,
         'show-select': true
       },
-      activePanel: 0,
       allStudentsWithActivities: [],
-      studentSearch: '' // <-- variable para búsqueda
+      studentSearch: '',
+      statusOptions: [
+        { text: 'PENDIENTES', value: 'pending' },
+        { text: 'CONTACTADAS', value: 'contacted' },
+        { text: 'APROBADAS', value: 'approval' },
+        { text: 'RECHAZADAS', value: 'rejected' }
+      ],
+      areaOptions: [
+        { text: 'DP/VSS', value: 'DP/VSS' },
+        { text: 'RS/VCI', value: 'RS/VCI' },
+        { text: 'CEE/EIE', value: 'CEE/EIE' },
+        { text: 'FCI/ICP', value: 'FCI/ICP' },
+        { text: 'AC', value: 'AC' }
+      ],
+
+      // INFO DIALOG
+      dialogInfoActivity: false,
+      activityInfo: {},
+
+      // DIALOG REGISTRO ALUMNO
+      dialogRegisterStudent: false,
+
+      // DIALOG CHANGE STATUS
+      dialogChangeStatus: false,
+      activityChangeStatus: {},
+
+      // RULES
+      dateEndRule: (value, dateStart) => {
+        return value > dateStart || 'LA FECHA DE FIN DEBE SER MAYOR A LA FECHA DE INICIO'
+      },
+      requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
+
+      // KEY PARA COMPONENTES
+      keyCounter: 1,
+      key: {
+        registerStudent: 1,
+        changeStatus: 2
+      }
     }
   },
 
@@ -169,13 +276,65 @@ export default {
       }, 3000)
     },
 
+    // DECODIFICADOR DE COMPONENTES
+    decoder (data) {
+      console.log('🚀 ~ decoder ~ data:', data)
+      switch (data.action) {
+        case 'cancel':
+          this.clean()
+          break
+        case 'activityInfoDialog':
+          this.activityInfoDialog(data.item)
+          break
+        case 'createUser':
+          this.createUser(data.data)
+          break
+        case 'activityChangeStatusDialog':
+          this.activityChangeStatusDialog(data.item)
+          break
+        case 'updateStatus':
+          this.updateActivity(data.data.activity)
+          this.updateStatus(data.data)
+          if (data.data.contactId) {
+            this.updateContact(data.data)
+          }
+          break
+        default:
+          console.warn('Acción no reconocida:', data.action)
+      }
+    },
+
+    // Limpia los filtros y el estado del componente
+    clean () {
+      this.keyCounter = Date.now() + Math.random()
+      if (this.dialogInfoActivity) {
+        this.dialogInfoActivity = false
+        this.activityInfo = {}
+      }
+      if (this.dialogRegisterStudent) {
+        this.dialogRegisterStudent = false
+        this.key.registerStudent = this.keyCounter++
+      }
+      if (this.dialogChangeStatus) {
+        this.dialogChangeStatus = false
+        this.activityChangeStatus = {}
+        this.key.changeStatus = this.keyCounter++
+      }
+    },
+
     async fetchAllStudentsWithActivities () {
       try {
         const res = await this.$axios.get('/users/students-with-activities', {
           withCredentials: true
         })
         if (res.data.success) {
-          this.allStudentsWithActivities = res.data.students
+          // Inicializa los filtros por alumno
+          this.allStudentsWithActivities = res.data.students.map(alum => ({
+            ...alum,
+            activityNameFilter: '',
+            statusFilter: null,
+            areaFilter: null
+          }))
         } else {
           this.$store.dispatch('mostrarAlerta', {
             color: 'red',
@@ -194,6 +353,30 @@ export default {
     },
 
     newStudentDialog () {
+    },
+
+    // Filtra las actividades de cada alumno según los filtros seleccionados
+    filteredActivities (alum) {
+      let filtered = alum.activities
+
+      if (alum.activityNameFilter && alum.activityNameFilter.trim()) {
+        const nameSearch = alum.activityNameFilter.trim().toLowerCase()
+        filtered = filtered.filter(act =>
+          act.name && act.name.toLowerCase().includes(nameSearch)
+        )
+      }
+
+      if (alum.statusFilter) {
+        filtered = filtered.filter(act => act.status === alum.statusFilter)
+      }
+
+      if (alum.areaFilter) {
+        filtered = filtered.filter(act =>
+          act.area && act.area === alum.areaFilter
+        )
+      }
+
+      return filtered
     },
 
     // Funciones para determinar el estilo del encabezado
@@ -220,6 +403,98 @@ export default {
         return 'header-success-text'
       }
       return 'white--text'
+    },
+
+    // Abre el diálogo de información de actividad
+    activityInfoDialog (activity) {
+      this.activityInfo = {
+        ...activity,
+        startDate: activity.dateStart,
+        endDate: activity.dateEnd
+      }
+      this.dialogInfoActivity = true
+    },
+
+    // Abre el diálogo de registro de nuevo alumno
+    registerStudentDialog () {
+      this.dialogRegisterStudent = true
+    },
+
+    async createUser (data) {
+      try {
+        const res = await this.$axios.post('/users/create-user', data)
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.clean()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message)
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.')
+      }
+    },
+
+    // Abre el diálogo para cambiar el estado de la actividad
+    activityChangeStatusDialog (activity) {
+      this.activityChangeStatus = {
+        ...activity,
+        startDate: activity.dateStart,
+        endDate: activity.dateEnd
+      }
+      this.dialogChangeStatus = true
+    },
+
+    async updateActivity (data) {
+      try {
+        const params = data.id
+        const url = `/activities/update-activity/${params}`
+        const res = await this.$axios.put(url, data, { withCredentials: true })
+        if (!res.data.success) {
+          this.mostrarAlerta('red', 'error', res.data.message)
+        }
+      } catch (e) {
+        console.error('Error al actualizar la actividad:', e)
+        this.mostrarAlerta('red', 'error', 'ERROR AL ACTUALIZAR LA ACTIVIDAD. ERROR INTERNO DEL SERVIDOR.')
+      }
+    },
+
+    async updateStatus (data) {
+      try {
+        data.lastAdminId = this.admin.id
+
+        const params = data.activityId
+        const url = `/activities/update-activity-status/${params}`
+        const res = await this.$axios.patch(url, data, { withCredentials: true })
+        if (res.data.success) {
+          this.mostrarAlerta('green', 'success', res.data.message)
+          this.clean()
+          this.fetchAllStudentsWithActivities()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message)
+        }
+      } catch (e) {
+        console.error('Error al cambiar el estado de la actividad:', e)
+        this.mostrarAlerta('red', 'error', 'ERROR AL CAMBIAR EL ESTADO DE LA ACTIVIDAD. ERROR INTERNO DEL SERVIDOR.')
+      }
+    },
+
+    async updateContact (data) {
+      try {
+        const body = {
+          id: data.contactId,
+          observations: data.observations,
+          status: 'resolved',
+          lastAdminId: this.admin.id
+        }
+
+        const url = '/contacts/update-contact'
+        const res = await this.$axios.patch(url, body, { withCredentials: true })
+        if (!res.data.success) {
+          this.mostrarAlerta('red', 'error', res.data.message || 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
+        }
+      } catch (e) {
+        this.mostrarAlerta('red', 'error', e.response?.data?.message || 'OCURRIÓ UN ERROR AL ACTUALIZAR EL CONTACTO')
+      }
     }
   }
 }

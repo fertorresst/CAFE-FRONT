@@ -107,7 +107,7 @@
       </v-row>
     </v-form>
 
-    <v-row class="d-flex justify-center align-stretch my-2">
+    <v-row v-if="source === 'ActivityEditContent'" class="d-flex justify-center align-stretch my-2">
       <v-btn-toggle
         tile
       >
@@ -167,6 +167,10 @@ export default {
     dateEndRule: {
       type: Function,
       required: true
+    },
+    source: {
+      type: String,
+      default: 'ActivityEditContent'
     }
   },
 
@@ -179,6 +183,9 @@ export default {
 
   created () {
     this.editActivity = this.activity
+    this.editActivity.name = (this.editActivity.name || '').toUpperCase()
+    this.editActivity.institution = (this.editActivity.institution || '').toUpperCase()
+    this.editActivity.area = (this.editActivity.area || '').toUpperCase()
   },
 
   methods: {

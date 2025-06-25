@@ -3,7 +3,7 @@
     <v-data-table
       :headers="headersAllActivities"
       :items="allActivities"
-      class="elevation-0 mt-4 cursor-pointer"
+      class="elevation-0 cursor-pointer"
       :footer-props="footerProps"
     >
       <template #[`item.periodName`]="{ item }">
@@ -16,7 +16,7 @@
 
       <template #[`item.updatedAt`]="{ item }">
         <strong v-if="item.status !== 'pending'">
-          {{ moment(item.updatedAt).format('DD MMM YY').toUpperCase() }}
+          {{ moment(item.updatedAt, "DD/MM/YYYY").format('DD MMM YY').toUpperCase() }}
         </strong>
         <strong v-else>
           -- --- ----
@@ -112,8 +112,8 @@
       </template>
 
       <template #no-data>
-        <strong>
-          AUN NO HAY ACTIVIDADES REGISTRADAS PARA ESTE ALUMNO.
+        <strong class="black--text text-center">
+          NO HAY ACTIVIDADES, VERIFICA LOS FILTROS
         </strong>
       </template>
     </v-data-table>
@@ -165,8 +165,8 @@ export default {
       return statusTexts[status] || 'DESCONOCIDO'
     },
 
-    emit (item, event) {
-      this.$emit(event, item)
+    emit (item, action) {
+      this.$emit('action', { item, action })
     }
   }
 }

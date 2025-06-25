@@ -57,7 +57,7 @@
     </v-expansion-panels>
 
     <StudentActivityInfoDialog
-      v-if="activityInfoDialog"
+      v-model="activityInfoDialog"
       :activity-info="activityInfo"
       :moment="moment"
       @action="decoder"

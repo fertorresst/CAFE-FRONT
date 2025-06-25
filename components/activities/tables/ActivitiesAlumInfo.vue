@@ -9,22 +9,22 @@
       >
         <tr>
           <th class="text-center">
-            NUA
+            <strong class="black--text">NUA</strong>
           </th>
           <th class="text-center">
-            SEDE
+            <strong class="black--text">SEDE</strong>
           </th>
           <th class="text-center">
-            CARRERA
+            <strong class="black--text">CARRERA</strong>
           </th>
           <th class="text-center">
-            CORREO
+            <strong class="black--text">CORREO</strong>
           </th>
           <th class="text-center">
-            TELÉFONO
+            <strong class="black--text">TELÉFONO</strong>
           </th>
           <th class="text-center">
-            SOLICITUDES
+            <strong class="black--text">SOLICITUDES</strong>
           </th>
         </tr>
       </thead>
