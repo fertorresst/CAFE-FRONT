@@ -151,6 +151,18 @@
       :moment="moment"
       @action="decoder"
     />
+
+    <DownloadReports
+      v-model="dialogDownloadReports"
+      :period-to-download-reports="periodToDownloadReports"
+      :required-rule="requiredRule"
+      :moment="moment"
+      @action="decoder"
+    />
+
+    <v-overlay :value="loadingChangeStatus" opacity="0.7">
+      <v-progress-circular indeterminate size="64" color="primary" />
+    </v-overlay>
   </v-col>
 </template>
 
@@ -159,6 +171,7 @@ import moment from 'moment'
 import { mapState } from 'vuex'
 import * as XLSX from 'xlsx-js-style'
 import { saveAs } from 'file-saver'
+import DownloadReports from '../../../components/periods/dialogs/DownloadReports'
 
 import DetailsPeriod from '../../../components/periods/dialogs/DetailsPeriod'
 import ChangeStatus from '../../../components/periods/dialogs/ChangeStatus'
@@ -176,6 +189,7 @@ moment.locale('es')
 
 export default {
   components: {
+    DownloadReports,
     DetailsPeriod,
     ChangeStatus,
     EditPeriod,
@@ -294,6 +308,10 @@ export default {
       textNewStatus: '',
       titleNewStatus: '',
 
+      // DIALOG DOWNLOAD REPORTS
+      dialogDownloadReports: false,
+      periodToDownloadReports: {},
+
       // TODOS LOS PERIODOS
       allPeriods: [],
 
@@ -331,7 +349,13 @@ export default {
         { text: 'SOLICITUDES', align: 'center', value: 'total_records', sortable: false },
         { text: 'ACCIONES', align: 'center', value: 'actions', sortable: false }
       ],
-      endedPeriods: []
+      endedPeriods: [],
+
+      // NUEVO CAMPO PARA CARGA DE ESTADO
+      loadingChangeStatus: false,
+
+      // loader opcional para descargas
+      downloadingReport: false
     }
   },
 
@@ -422,11 +446,18 @@ export default {
         case 'closeTable':
           this.changeStatusDialog(data)
           break
+        case 'downloadReports':
+          this.dialogDownloadReports = true
+          this.periodToDownloadReports = data.item
+          break
         case 'downloadExcelTable':
           this.downloadExcelReport(data.item)
           break
         case 'downloadPDFTable':
           this.downloadPDFReport(data.item)
+          break
+        case 'downloadCareerTable':
+          this.downloadCareerReportPDF(data.item)
           break
         case 'createPeriod':
           this.createPeriod(data.period)
@@ -439,6 +470,9 @@ export default {
           break
         case 'changeStatus':
           this.changeStatus(data.data)
+          break
+        case 'downloadAllActivitiesReportPDF':
+          this.downloadAllActivitiesReportPDF(data.item)
           break
         default:
           break
@@ -468,12 +502,14 @@ export default {
       this.dialogEditPeriod = false // Cerrar dialog de editar periodo
       this.dialogChangeStatus = false // Cerrar dialog de finalizar periodo
       this.dialogDetailsPeriod = false // Cerrar dialog de detalles del periodo
+      this.dialogDownloadReports = false // Cerrar dialog de descargar reportes
 
       // VARIABLES
       this.periodToDelete = null // Resetear periodo a eliminar
       this.periodToEdit = null // Resetear periodo a editar
       this.periodToChangeStatus = '' // Resetear periodo a finalizar
       this.periodToDetails = null // Resetear periodo a ver detalles
+      this.periodToDownloadReports = {} // Resetear periodo a descargar reportes
     },
 
     cancel () {
@@ -597,6 +633,52 @@ export default {
     },
 
     async changeStatus (data) {
+      this.loadingChangeStatus = true
+      // Validar si el nuevo estado es 'ended'
+      if (data.status === 'ended') {
+        try {
+          // El endpoint retorna un array de alumnos, cada uno con activities
+          const res = await this.$axios.get(`/activities/get-activities-by-period/${data.id}`)
+          if (res.data.success) {
+            // Buscar si existe alguna actividad pendiente en cualquier alumno
+            const alumnos = res.data.data
+            let pendientes = []
+            alumnos.forEach((alumno) => {
+              if (Array.isArray(alumno.activities)) {
+                const pendientesAlumno = alumno.activities.filter(act => act.status === 'pending')
+                if (pendientesAlumno.length > 0) {
+                  pendientes = pendientes.concat(
+                    pendientesAlumno.map(act => ({
+                      alumno: alumno.fullName,
+                      actividad: act.name
+                    }))
+                  )
+                }
+              }
+            })
+            if (pendientes.length > 0) {
+              // Opcional: mostrar nombres de alumnos y actividades pendientes
+              this.mostrarAlerta(
+                'red',
+                'error',
+                'NO SE PUDO FINALIZAR EL PERIODO PORQUE HAY ACTIVIDADES PENDIENTES DE REVISIÓN'
+              )
+              this.loadingChangeStatus = false
+              return // Detiene el flujo, no permite continuar
+            }
+          } else {
+            this.mostrarAlerta('red', 'error', 'NO SE PUDO VALIDAR LAS ACTIVIDADES DEL PERIODO')
+            this.loadingChangeStatus = false
+            return
+          }
+        } catch (e) {
+          this.mostrarAlerta('red', 'error', 'ERROR AL VALIDAR ACTIVIDADES DEL PERIODO')
+          this.loadingChangeStatus = false
+          return
+        }
+      }
+
+      // Si pasa la validación, continúa con el cambio de estado
       const url = '/periods/update-status'
       await this.$axios.patch(url, data)
         .then((res) => {
@@ -613,6 +695,9 @@ export default {
           this.mostrarAlerta('red', 'error', 'OCURRIÓ UN ERROR AL FINALIZAR EL PERIODO')
           // eslint-disable-next-line no-console
           console.log('🚀 ~ changeStatus ~ e: ', e)
+        })
+        .finally(() => {
+          this.loadingChangeStatus = false
         })
     },
 
@@ -640,6 +725,12 @@ export default {
       }
     },
 
+    // DIALOG DOWNLOAD REPORTS
+    downloadReportsDialog (period) {
+      this.periodToDownloadReports = period
+      this.dialogDownloadReports = true
+    },
+
     // DESCARGAR REPORTE EN EXCEL
     async downloadExcelReport (period) {
       try {
@@ -663,7 +754,7 @@ export default {
       // Formatea fechas
       const fechaInicio = period.per_date_start ? this.moment(period.per_date_start).format('DD/MM/YYYY') : ''
       const fechaFin = period.per_date_end ? this.moment(period.per_date_end).format('DD/MM/YYYY') : ''
-      const exclusivo = period.per_exclusive ? 'SI' : 'NO'
+      const exclusivo = period.per_exclusive ? 'EXCLUSIVO' : 'REGULAR'
 
       // Encabezado del periodo (combinado A1:D1, centrado y dorado)
       sheetData.push([
@@ -676,7 +767,7 @@ export default {
         { v: 'INICIO', s: { alignment: { horizontal: 'center' }, ...goldFill } },
         '',
         { v: 'TÉRMINO', s: { alignment: { horizontal: 'center' }, ...goldFill } },
-        { v: '¿EXCLUSIVO?', s: { alignment: { horizontal: 'center' }, ...goldFill } }
+        { v: 'TIPO', s: { alignment: { horizontal: 'center' }, ...goldFill } }
       ])
       merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 1 } })
 
@@ -792,13 +883,13 @@ export default {
       const doc = new JSPDF()
       const fechaInicio = period.per_date_start ? this.moment(period.per_date_start).format('DD/MM/YYYY') : ''
       const fechaFin = period.per_date_end ? this.moment(period.per_date_end).format('DD/MM/YYYY') : ''
-      const exclusivo = period.per_exclusive ? 'SI' : 'NO'
+      const exclusivo = period.per_exclusive ? 'EXCLUSIVO' : 'REGULAR'
 
       // Encabezado del periodo
       doc.setFontSize(14)
       doc.text(`PERIODO: ${period.per_name || ''}`, 14, 15)
       doc.setFontSize(10)
-      doc.text(`INICIO: ${fechaInicio}    TÉRMINO: ${fechaFin}    ¿EXCLUSIVO?: ${exclusivo}`, 14, 22)
+      doc.text(`INICIO: ${fechaInicio}    TÉRMINO: ${fechaFin}    TIPO: ${exclusivo}`, 14, 22)
 
       let startY = 30
 
@@ -878,6 +969,85 @@ export default {
       })
 
       doc.save(`Reporte_${period.per_name}.pdf`)
+    },
+
+    async downloadAllActivitiesReportPDF (period) {
+      try {
+        // Llama al endpoint del backend que genera el PDF (ajusta la ruta si es necesario)
+        const response = await this.$axios.get(`/periods/download-report/${period.per_id}`, {
+          responseType: 'blob'
+        })
+
+        // Crea un enlace para descargar el archivo PDF
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `reporte-actividades-periodo-${period.per_id}.pdf`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+
+        this.mostrarAlerta('green', 'success', 'EL REPORTE SE ESTÁ DESCARGANDO')
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', 'NO SE PUDO DESCARGAR EL REPORTE DE ACTIVIDADES')
+      }
+    },
+
+    async downloadCareerReportPDF (payload) {
+      // payload esperado: { per_id, per_name?, sede, career }
+      if (!payload || !payload.per_id || !payload.sede || !payload.career) {
+        this.mostrarAlerta('red', 'error', 'Faltan datos para generar el reporte (periodo, sede o carrera).')
+        return
+      }
+
+      this.downloadingReport = true
+      try {
+        // Construye la query string
+        const params = new URLSearchParams({
+          periodId: payload.per_id,
+          sede: payload.sede,
+          career: payload.career
+        }).toString()
+
+        // GET en vez de POST
+        const res = await this.$axios.get(`/periods/download-career-report?${params}`, {
+          responseType: 'blob',
+          withCredentials: true
+        })
+
+        const blob = new Blob([res.data], { type: 'application/pdf' })
+
+        // Intenta usar el nombre de archivo del header si viene
+        let filename = 'reporte-carrera.pdf'
+        const disposition = res.headers && (res.headers['content-disposition'] || res.headers['Content-Disposition'])
+        if (disposition && disposition.includes('filename=')) {
+          const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+          if (match && match[1]) {
+            filename = decodeURIComponent(match[1].replace(/['"]/g, ''))
+          }
+        } else {
+          const safe = `${(payload.per_name || 'periodo')}-${payload.sede}-${payload.career}`.replace(/[^\w-]+/g, '_')
+          filename = `reporte-actividades-${safe}.pdf`
+        }
+
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+
+        this.mostrarAlerta('green', 'success', 'EL REPORTE SE ESTÁ DESCARGANDO')
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('downloadCareerReportPDF error:', e)
+        this.mostrarAlerta('red', 'error', 'NO SE PUDO DESCARGAR EL REPORTE DE LA CARRERA')
+      } finally {
+        this.downloadingReport = false
+      }
     }
   }
 }

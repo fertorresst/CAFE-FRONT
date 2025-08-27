@@ -26,14 +26,12 @@
 
     <template #[`item.actions`]="{ item }">
       <div class="d-flex flex-nowrap align-stretch justify-center" @click.stop>
-        <v-tooltip
-          color="info"
-          bottom
-        >
+        <v-tooltip color="info" bottom>
           <template #activator="{ on, attrs }">
             <v-icon
               color="info"
               v-bind="attrs"
+              class="mr-1"
               v-on="on"
               @click="emit(item, 'detailsTable')"
             >
@@ -43,38 +41,19 @@
           <span>VER DETALLES</span>
         </v-tooltip>
 
-        <v-tooltip
-          color="success"
-          bottom
-        >
+        <!-- Nuevo botón para abrir el modal de reportes -->
+        <v-tooltip color="green" bottom>
           <template #activator="{ on, attrs }">
             <v-icon
-              color="success"
+              color="green"
               v-bind="attrs"
               v-on="on"
-              @click="emit(item, 'downloadExcelTable')"
+              @click="emit(item, 'downloadReports')"
             >
-              mdi-file-excel
+              mdi-download-circle
             </v-icon>
           </template>
-          <span>DESCARGAR EXCEL</span>
-        </v-tooltip>
-
-        <v-tooltip
-          color="red"
-          bottom
-        >
-          <template #activator="{ on, attrs }">
-            <v-icon
-              color="red"
-              v-bind="attrs"
-              v-on="on"
-              @click="emit(item, 'downloadPDFTable')"
-            >
-              mdi-file-pdf-box
-            </v-icon>
-          </template>
-          <span>DESCARGAR PDF</span>
+          <span>DESCARGAR REPORTES</span>
         </v-tooltip>
       </div>
     </template>
@@ -99,6 +78,13 @@ export default {
     footerProps: {
       type: Object,
       required: true
+    }
+  },
+
+  data () {
+    return {
+      reportDialog: false,
+      selectedPeriod: null
     }
   },
 
