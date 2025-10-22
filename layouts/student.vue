@@ -120,7 +120,7 @@ export default {
         {
           icon: 'mdi-home',
           title: 'INICIO',
-          to: '/student/index'
+          to: '/student'
         },
         {
           icon: 'mdi-account',

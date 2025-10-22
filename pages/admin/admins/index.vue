@@ -1,8 +1,25 @@
 <template>
   <v-col cols="12">
     <v-row align="center" justify="center">
-      <h1 class="my-5">
+      <h1 class="my-5 d-flex align-center">
         PERFILES DE ADMINISTRACIÓN
+        <!-- Botón de ayuda -->
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              small
+              class="ml-2"
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="dialogLegend = true"
+            >
+              <v-icon>mdi-help-circle-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>Ver ayuda</span>
+        </v-tooltip>
       </h1>
     </v-row>
 
@@ -102,6 +119,9 @@
       :admin-data="adminDelete"
       @action="decoder"
     />
+
+    <!-- Modal de ayuda -->
+    <LegendHelpDialog v-model="dialogLegend" page="admins" />
   </v-col>
 </template>
 
@@ -116,6 +136,7 @@ import EditAdminDialog from '../../../components/admin/dialogs/EditAdminDialog.v
 import NewAdminDialog from '../../../components/admin/dialogs/NewAdminDialog'
 import AdminsInactiveTable from '../../../components/admin/tables/AdminsInactiveTable.vue'
 import AdminsActiveTable from '../../../components/admin/tables/AdminsActiveTable'
+import LegendHelpDialog from '~/components/shared/LegendHelpDialog.vue'
 moment.locale('es')
 
 export default {
@@ -127,7 +148,8 @@ export default {
     EditAdminDialog,
     NewAdminDialog,
     AdminsInactiveTable,
-    AdminsActiveTable
+    AdminsActiveTable,
+    LegendHelpDialog
   },
 
   layout: 'admin',
@@ -183,7 +205,10 @@ export default {
 
       // DIALOG DELETE ADMIN
       dialogDeleteAdmin: false,
-      adminDelete: {}
+      adminDelete: {},
+
+      // DIALOG LEYENDA DE AYUDA
+      dialogLegend: false
     }
   },
 

@@ -166,6 +166,7 @@ export default {
     },
 
     decoder (data) {
+      // eslint-disable-next-line no-console
       console.log('🚀 ~ decoder ~ data:', data)
       switch (data.action) {
         case 'cancel':
@@ -194,7 +195,7 @@ export default {
           password: this.password
         }, { withCredentials: true })
         if (res.data.success) {
-          this.$router.push('/student/dashboard')
+          this.$router.push('/student')
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)
         }

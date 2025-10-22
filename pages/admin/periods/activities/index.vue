@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row class="my-4" align="center" style="position: relative; min-height: 56px;">
       <!-- Botón de regreso a la izquierda -->
-      <v-col cols="auto" class="d-flex align-center" style="position: absolute; left: 0;">
+      <v-col cols="auto" class="d-flex align-center" style="position: absolute; left: 0; z-index: 10;">
         <v-tooltip color="primary" bottom>
           <template #activator="{ on, attrs }">
             <v-btn
@@ -19,22 +19,57 @@
           <span>REGRESAR A PERIODOS</span>
         </v-tooltip>
       </v-col>
+
       <!-- Título centrado absolutamente -->
       <v-col v-if="!isConsulta" cols="12" class="pa-0">
-        <div style="display: flex; justify-content: center; align-items: center; height: 56px;">
-          <h2 class="ml-2 mb-0" style="text-align: center; width: 100%;">
+        <div style="display: flex; justify-content: center; align-items: center; height: 56px; position: relative;">
+          <h2 class="mb-0" style="text-align: center;">
             ALUMNOS A CONTACTAR
           </h2>
+          <!-- Botón de ayuda (posición absoluta) -->
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                small
+                color="info"
+                style="position: absolute; right: 16px;"
+                v-bind="attrs"
+                v-on="on"
+                @click="dialogLegend = true"
+              >
+                <v-icon>mdi-help-circle-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Ver ayuda</span>
+          </v-tooltip>
         </div>
       </v-col>
 
       <v-col v-else cols="12" class="pa-0">
-        <div style="display: flex; justify-content: center; align-items: center; height: 56px;">
-          <h2 class="ml-2 mb-0" style="text-align: center; width: 100%;">
+        <div style="display: flex; justify-content: center; align-items: center; height: 56px; position: relative;">
+          <h2 class="mb-0" style="text-align: center;">
             ACTIVIDADES ENVIADAS POR LOS ALUMNOS EN EL PERIODO
             <br>
             {{ period.per_name.toUpperCase() }}
           </h2>
+          <!-- Botón de ayuda (posición absoluta) -->
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                small
+                color="info"
+                style="position: absolute; right: 16px;"
+                v-bind="attrs"
+                v-on="on"
+                @click="dialogLegend = true"
+              >
+                <v-icon>mdi-help-circle-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Ver ayuda</span>
+          </v-tooltip>
         </div>
       </v-col>
     </v-row>
@@ -121,6 +156,9 @@
       :required-rule="requiredRule"
       @action="decoder"
     />
+
+    <!-- Modal de ayuda -->
+    <LegendHelpDialog v-model="dialogLegend" page="activities" />
   </v-col>
 </template>
 
@@ -131,14 +169,14 @@ import ContactNewDialog from '../../../../components/activities/dialogs/ContactN
 import ActivitiesPanel from '../../../../components/activities/panels/ActivitiesPanel'
 import ContactUpdateDialog from '../../../../components/activities/dialogs/ContactUpdateDialog'
 import ContactDeleteDialog from '../../../../components/activities/dialogs/ContactDeleteDialog'
-
 import ContactInfoDialog from '../../../../components/activities/dialogs/ContactInfoDialog'
 import ContactTable from '../../../../components/activities/tables/ContactTable'
+import LegendHelpDialog from '../../../../components/shared/LegendHelpDialog'
 
 moment.locale('es')
 
 export default {
-  components: { ActivityRejectDialog, ContactNewDialog, ActivitiesPanel, ContactUpdateDialog, ContactDeleteDialog, ContactInfoDialog, ContactTable },
+  components: { ActivityRejectDialog, ContactNewDialog, ActivitiesPanel, ContactUpdateDialog, ContactDeleteDialog, ContactInfoDialog, ContactTable, LegendHelpDialog },
 
   layout: 'admin',
 
@@ -208,7 +246,10 @@ export default {
 
       // ACTIVIDADES INDIVIDUALES
       activities: [],
-      dialogRejectActivity: false
+      dialogRejectActivity: false,
+
+      // DIALOG LEYENDA DE AYUDA
+      dialogLegend: false
     }
   },
 

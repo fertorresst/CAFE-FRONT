@@ -1,8 +1,25 @@
 <template>
   <v-col cols="12">
     <v-row align="center" justify="center">
-      <h1 class="my-5">
+      <h1 class="my-5 d-flex align-center">
         ACTIVIDADES ENVIADAS POR ALUMNO
+        <!-- Botón de ayuda -->
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              small
+              class="ml-2"
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="dialogLegend = true"
+            >
+              <v-icon>mdi-help-circle-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>Ver ayuda</span>
+        </v-tooltip>
       </h1>
     </v-row>
 
@@ -137,6 +154,9 @@
       :date-end-rule="dateEndRule"
       @action="decoder"
     />
+
+    <!-- Modal de ayuda -->
+    <LegendHelpDialog v-model="dialogLegend" page="students" />
   </v-col>
 </template>
 
@@ -149,6 +169,7 @@ import StudentActivityInfoDialog from '../../../components/student/dialogs/Stude
 import StudentAllActivities from '../../../components/student/tables/StudentAllActivities'
 import ActivitiesAreasCountInfo from '~/components/activities/tables/ActivitiesAreasCountInfo.vue'
 import ActivitiesAlumInfo from '~/components/activities/tables/ActivitiesAlumInfo.vue'
+import LegendHelpDialog from '~/components/shared/LegendHelpDialog.vue'
 moment.locale('es')
 
 export default {
@@ -158,7 +179,8 @@ export default {
     StudentActivityInfoDialog,
     StudentAllActivities,
     ActivitiesAreasCountInfo,
-    ActivitiesAlumInfo
+    ActivitiesAlumInfo,
+    LegendHelpDialog
   },
 
   layout: 'admin',
@@ -215,7 +237,10 @@ export default {
       key: {
         registerStudent: 1,
         changeStatus: 2
-      }
+      },
+
+      // DIALOG LEYENDA DE AYUDA
+      dialogLegend: false
     }
   },
 

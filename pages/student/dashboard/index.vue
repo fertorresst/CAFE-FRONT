@@ -1,8 +1,25 @@
 <template>
   <v-col cols="12">
     <v-row align="center" justify="center">
-      <h1 class="my-5">
+      <h1 class="my-5 d-flex align-center">
         ACTIVIDADES ENVIADAS
+        <!-- Botón de ayuda -->
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              small
+              class="ml-2"
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="dialogLegend = true"
+            >
+              <v-icon>mdi-help-circle-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>Ver ayuda</span>
+        </v-tooltip>
       </h1>
     </v-row>
 
@@ -53,6 +70,9 @@
       :moment="moment"
       @action="decoder"
     />
+
+    <!-- Modal de ayuda -->
+    <LegendHelpDialog v-model="dialogLegend" page="student-dashboard" />
   </v-col>
 </template>
 
@@ -60,10 +80,11 @@
 import moment from 'moment'
 import StudentSendActivitiesDialog from '../../../components/student/dialogs/StudentSendActivitiesDialog'
 import StudentActivitiesPanel from '../../../components/student/panels/StudentActivitiesPanel'
+import LegendHelpDialog from '~/components/shared/LegendHelpDialog.vue'
 moment.locale('es')
 
 export default {
-  components: { StudentSendActivitiesDialog, StudentActivitiesPanel },
+  components: { StudentSendActivitiesDialog, StudentActivitiesPanel, LegendHelpDialog },
 
   layout: 'student',
 
@@ -116,7 +137,10 @@ export default {
       },
 
       // DIALOGO DE ENVIAR ACTIVIDADES
-      sendActivitiesDialog: false
+      sendActivitiesDialog: false,
+
+      // DIALOG LEYENDA DE AYUDA
+      dialogLegend: false
     }
   },
 

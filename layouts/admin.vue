@@ -127,6 +127,11 @@ export default {
           to: '/admin/periods'
         },
         {
+          icon: 'mdi-qrcode',
+          title: 'CÓDIGOS QR',
+          to: '/admin/qr-codes'
+        },
+        {
           icon: 'mdi-badge-account',
           title: 'ADMINS',
           to: '/admin/admins'
@@ -165,8 +170,11 @@ export default {
       return this.admin.role === 'consulta'
     },
     filteredItems () {
-      // ADMINS solo para superadmins, ALUMNOS para superadmins y admins
+      // CÓDIGOS QR, ADMINS solo para superadmins, ALUMNOS para superadmins y admins
       return this.items.filter((item) => {
+        if (item.title === 'CÓDIGOS QR') {
+          return this.isSuperadmin
+        }
         if (item.title === 'ADMINS') {
           return this.isSuperadmin
         }

@@ -1,8 +1,25 @@
 <template>
   <v-col cols="12">
     <v-row align="center" justify="center">
-      <h1 class="my-5">
+      <h1 class="my-5 d-flex align-center">
         DASHBOARD DE PERIODOS
+        <!-- Botón de ayuda -->
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              small
+              class="ml-2"
+              color="info"
+              v-bind="attrs"
+              v-on="on"
+              @click="dialogLegend = true"
+            >
+              <v-icon>mdi-help-circle-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>Ver ayuda</span>
+        </v-tooltip>
       </h1>
     </v-row>
 
@@ -157,12 +174,21 @@
       :period-to-download-reports="periodToDownloadReports"
       :required-rule="requiredRule"
       :moment="moment"
+      :downloading-report="downloadingReport"
       @action="decoder"
     />
 
     <v-overlay :value="loadingChangeStatus" opacity="0.7">
-      <v-progress-circular indeterminate size="64" color="primary" />
+      <v-progress-circular indeterminate size="64" color="#fed55e" />
     </v-overlay>
+
+    <!-- Loader global para descargas de reportes -->
+    <v-overlay :value="downloadingReport" opacity="0.7">
+      <v-progress-circular indeterminate size="64" color="#fed55e" />
+    </v-overlay>
+
+    <!-- Modal de ayuda -->
+    <LegendHelpDialog v-model="dialogLegend" page="periods" />
   </v-col>
 </template>
 
@@ -172,6 +198,7 @@ import { mapState } from 'vuex'
 import * as XLSX from 'xlsx-js-style'
 import { saveAs } from 'file-saver'
 import DownloadReports from '../../../components/periods/dialogs/DownloadReports'
+import LegendHelpDialog from '../../../components/shared/LegendHelpDialog.vue'
 
 import DetailsPeriod from '../../../components/periods/dialogs/DetailsPeriod'
 import ChangeStatus from '../../../components/periods/dialogs/ChangeStatus'
@@ -197,7 +224,8 @@ export default {
     NewPeriod,
     EndedTable,
     PendingTable,
-    ActiveTable
+    ActiveTable,
+    LegendHelpDialog
   },
 
   layout: 'admin',
@@ -355,7 +383,10 @@ export default {
       loadingChangeStatus: false,
 
       // loader opcional para descargas
-      downloadingReport: false
+      downloadingReport: false,
+
+      // Dialog de ayuda
+      dialogLegend: false
     }
   },
 
@@ -473,6 +504,9 @@ export default {
           break
         case 'downloadAllActivitiesReportPDF':
           this.downloadAllActivitiesReportPDF(data.item)
+          break
+        case 'showAlert':
+          this.mostrarAlerta(data.color, data.type, data.message)
           break
         default:
           break
@@ -733,15 +767,19 @@ export default {
 
     // DESCARGAR REPORTE EN EXCEL
     async downloadExcelReport (period) {
+      this.downloadingReport = true
       try {
         const res = await this.$axios.get(`/periods/final-report/${period.per_id}`)
         if (res.data.success) {
           this.generateExcelReport(res.data.report)
+          this.mostrarAlerta('green', 'success', 'EL REPORTE SE ESTÁ GENERANDO')
         } else {
           this.mostrarAlerta('red', 'error', 'NO SE PUDO OBTENER LA INFORMACIÓN DEL REPORTE.')
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL DESCARGAR EL REPORTE.')
+      } finally {
+        this.downloadingReport = false
       }
     },
 
@@ -860,15 +898,19 @@ export default {
 
     // DESCARGAR REPORTE EN PDF
     async downloadPDFReport (period) {
+      this.downloadingReport = true
       try {
         const res = await this.$axios.get(`/periods/final-report/${period.per_id}`)
         if (res.data.success) {
           this.exportPDFReport(res.data.report)
+          this.mostrarAlerta('green', 'success', 'EL REPORTE SE ESTÁ GENERANDO')
         } else {
           this.mostrarAlerta('red', 'error', 'NO SE PUDO OBTENER LA INFORMACIÓN DEL REPORTE.')
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL DESCARGAR EL REPORTE.')
+      } finally {
+        this.downloadingReport = false
       }
     },
 
@@ -972,13 +1014,11 @@ export default {
     },
 
     async downloadAllActivitiesReportPDF (period) {
+      this.downloadingReport = true
       try {
-        // Llama al endpoint del backend que genera el PDF (ajusta la ruta si es necesario)
         const response = await this.$axios.get(`/periods/download-report/${period.per_id}`, {
           responseType: 'blob'
         })
-
-        // Crea un enlace para descargar el archivo PDF
         const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
         const link = document.createElement('a')
         link.href = url
@@ -991,34 +1031,30 @@ export default {
         this.mostrarAlerta('green', 'success', 'EL REPORTE SE ESTÁ DESCARGANDO')
       } catch (error) {
         this.mostrarAlerta('red', 'error', 'NO SE PUDO DESCARGAR EL REPORTE DE ACTIVIDADES')
+      } finally {
+        this.downloadingReport = false
       }
     },
 
     async downloadCareerReportPDF (payload) {
-      // payload esperado: { per_id, per_name?, sede, career }
       if (!payload || !payload.per_id || !payload.sede || !payload.career) {
-        this.mostrarAlerta('red', 'error', 'Faltan datos para generar el reporte (periodo, sede o carrera).')
+        this.mostrarAlerta('red', 'error', 'FALTAN DATOS PARA GENERAR EL REPORTE (PERIODO, SEDE O CARRERA).')
         return
       }
-
       this.downloadingReport = true
       try {
-        // Construye la query string
         const params = new URLSearchParams({
           periodId: payload.per_id,
           sede: payload.sede,
           career: payload.career
         }).toString()
 
-        // GET en vez de POST
         const res = await this.$axios.get(`/periods/download-career-report?${params}`, {
           responseType: 'blob',
           withCredentials: true
         })
 
         const blob = new Blob([res.data], { type: 'application/pdf' })
-
-        // Intenta usar el nombre de archivo del header si viene
         let filename = 'reporte-carrera.pdf'
         const disposition = res.headers && (res.headers['content-disposition'] || res.headers['Content-Disposition'])
         if (disposition && disposition.includes('filename=')) {
