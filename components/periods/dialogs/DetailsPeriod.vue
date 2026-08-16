@@ -40,12 +40,24 @@
         <br>
 
         <strong>FECHA DE INICIO: </strong>
-        <span>{{ moment(periodToDetails.per_date_start).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+        <span>
+          {{
+            moment(periodToDetails.per_date_start)
+              .format('dddd DD MMMM YYYY')
+              .toUpperCase()
+          }}
+        </span>
 
         <br>
 
         <strong>FECHA DE FIN: </strong>
-        <span>{{ moment(periodToDetails.per_date_end).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+        <span>
+          {{
+            moment(periodToDetails.per_date_end)
+              .format('dddd DD MMMM YYYY')
+              .toUpperCase()
+          }}
+        </span>
 
         <br>
 
@@ -66,12 +78,24 @@
         <br>
 
         <strong>CREACIÓN: </strong>
-        <span>{{ moment(periodToDetails.per_created_at).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+        <span>
+          {{
+            moment(periodToDetails.per_created_at)
+              .format('dddd DD MMMM YYYY')
+              .toUpperCase()
+          }}
+        </span>
 
         <br>
 
         <strong>ÚLTIMA ACTUALIZACIÓN: </strong>
-        <span>{{ moment(periodToDetails.per_updated_at).format('dddd DD MMMM YYYY').toUpperCase() }}</span>
+        <span>
+          {{
+            moment(periodToDetails.per_updated_at)
+              .format('dddd DD MMMM YYYY')
+              .toUpperCase()
+          }}
+        </span>
 
         <br>
         <br>
@@ -97,53 +121,66 @@
         <br>
 
         <v-simple-table
-          v-if="isDataLoaded"
+          v-if="!loading"
           class="text-center mt-4 subtitle"
           dense
         >
           <template #default>
-            <thead
-              class="black--text"
-            >
+            <thead class="black--text">
               <tr>
                 <th class="text-center">
                   DP
                 </th>
+
                 <th class="text-center">
                   RS
                 </th>
+
                 <th class="text-center">
                   CEE
                 </th>
+
                 <th class="text-center">
                   FCI
                 </th>
+
                 <th class="text-center">
                   AC
                 </th>
-                <th class="text-center font-weight-bold blue lighten-5">
+
+                <th
+                  class="text-center font-weight-bold blue lighten-5"
+                >
                   TOTAL
                 </th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
                 <td class="black--text text-center">
                   {{ areaCounts.DP }}
                 </td>
+
                 <td class="black--text text-center">
                   {{ areaCounts.RS }}
                 </td>
+
                 <td class="black--text text-center">
                   {{ areaCounts.CEE }}
                 </td>
+
                 <td class="black--text text-center">
                   {{ areaCounts.FCI }}
                 </td>
+
                 <td class="black--text text-center">
                   {{ areaCounts.AC }}
                 </td>
-                <td class="black--text text-center blue lighten-5">
+
+                <td
+                  class="black--text text-center blue lighten-5"
+                >
                   {{ areaCounts.total }}
                 </td>
               </tr>
@@ -165,6 +202,7 @@
           color="#fed55e"
           rounded
           elevation="0"
+          :disabled="loading"
           @click="close()"
         >
           <strong>CERRAR</strong>
@@ -179,13 +217,15 @@ export default {
   props: {
     periodToDetails: {
       type: Object,
-      require: true,
+      required: true,
       default: () => ({})
     },
+
     getAreaCounts: {
       type: Function,
       required: true
     },
+
     moment: {
       type: Function,
       required: true
@@ -195,51 +235,62 @@ export default {
   data () {
     return {
       show: true,
-      areaCounts: {
-        dp: { activities: 0, collectives: 0, total: 0 },
-        rs: { activities: 0, collectives: 0, total: 0 },
-        cee: { activities: 0, collectives: 0, total: 0 },
-        fci: { activities: 0, collectives: 0, total: 0 },
-        ac: { activities: 0, collectives: 0, total: 0 },
-        total: { activities: 0, collectives: 0, total: 0 }
-      }
-    }
-  },
+      loading: true,
 
-  computed: {
-    isDataLoaded () {
-      if (this.areaCounts) {
-        return true
+      areaCounts: {
+        DP: 0,
+        RS: 0,
+        CEE: 0,
+        FCI: 0,
+        AC: 0,
+        total: 0
       }
-      return false
     }
   },
 
   async mounted () {
+    this.loading = true
+
     try {
-      const response = await this.getAreaCounts(this.periodToDetails.per_id)
+      const response = await this.getAreaCounts(
+        this.periodToDetails.per_id
+      )
+
       if (response && response.areaCounts) {
         this.areaCounts = response.areaCounts
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error loading area counts:', error)
+      console.error(
+        'Error loading area counts:',
+        error
+      )
+    } finally {
+      this.loading = false
     }
   },
 
   methods: {
     close () {
-      this.$emit('action', { action: 'cancel' })
+      this.$emit('action', {
+        action: 'cancel'
+      })
     },
 
     status () {
       if (this.periodToDetails.per_status === 'pending') {
         return 'PENDIENTE DE REVISIÓN'
-      } else if (this.periodToDetails.per_status === 'active') {
+      } else if (
+        this.periodToDetails.per_status === 'active'
+      ) {
         return 'ACTIVO'
-      } else if (this.periodToDetails.per_status === 'ended') {
+      } else if (
+        this.periodToDetails.per_status === 'ended'
+      ) {
         return 'FINALIZADO'
       }
+
+      return ''
     }
   }
 }

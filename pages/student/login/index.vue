@@ -5,7 +5,7 @@
     >
       <v-col cols="12" align="center" justify="center">
         <v-img
-          src="/MiCAFÉ.svg"
+          src="/MiCAFE.svg"
           alt="MiCAFE"
           max-width="300"
           contain
@@ -70,7 +70,7 @@
                 rounded
                 elevation="0"
                 :loading="loading"
-                :diable="loading"
+                :disabled="loading"
                 @click="login()"
               >
                 <strong>Iniciar Sesión</strong>

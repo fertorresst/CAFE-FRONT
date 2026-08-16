@@ -66,7 +66,7 @@
         <v-col cols="4" class="d-flex justify-center">
           <v-toolbar-title>
             <v-img
-              src="/MiCAFÉ.svg"
+              src="/MiCAFE.svg"
               alt="MiCAFE"
               max-width="100"
               contain
@@ -90,8 +90,8 @@
                 :value="unreadNotifications > 0"
                 color="red"
                 overlap
-                offset-x="12"
-                offset-y="12"
+                offset-x="10"
+                offset-y="20"
               >
                 <v-btn
                   icon

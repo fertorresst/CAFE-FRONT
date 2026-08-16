@@ -8,7 +8,7 @@
     >
       <v-spacer />
       <v-img
-        src="/MiCAFÉ.svg"
+        src="/MiCAFE.svg"
         alt="MiCAFE"
         max-width="120"
         contain

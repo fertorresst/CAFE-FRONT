@@ -5,7 +5,7 @@
     >
       <v-col cols="12" align="center" justify="center">
         <v-img
-          src="/MiCAFÉ.svg"
+          src="/MiCAFE.svg"
           alt="MiCAFE"
           max-width="300"
           contain
@@ -67,7 +67,7 @@
                 color="#fed55e"
                 rounded
                 elevation="0"
-                :loading="lodaing"
+                :loading="loading"
                 :disabled="loading"
                 @click="login()"
               >
@@ -133,13 +133,14 @@ export default {
     },
 
     async login () {
+      this.loading = true
       try {
         const res = await this.$axios.post('/admin/login', {
           email: this.email,
           password: this.password
         }, { withCredentials: true })
         if (res.data.success) {
-          console.log('🚀 ~ login ~ res.data:', res.data)
+        //          console.log('🚀 ~ login ~ res.data:', res.data)
           this.$router.push('/admin/periods')
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)
