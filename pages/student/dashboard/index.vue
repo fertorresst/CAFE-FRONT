@@ -35,6 +35,12 @@
     </v-row>
 
     <v-row align="center" justify="center">
+      <div v-if="loadingActivities" class="text-center my-8">
+        <v-progress-circular indeterminate color="primary" size="50" />
+        <div class="mt-3">
+          <strong>CARGANDO ACTIVIDADES...</strong>
+        </div>
+      </div>
       <StudentActivitiesPanel
         v-if="sendActivities.length"
         :send-activities="sendActivities"
@@ -94,6 +100,7 @@ export default {
     return {
       moment,
       sendActivities: [],
+      loadingActivities: true,
       footerProps: {
         'items-per-page-options': [5, 10, 15, 20],
         'items-per-page-text': 'FILAS POR PÁGINA',
@@ -177,6 +184,7 @@ export default {
 
     // OBTENER LAS ACTIVIDADES ENVIADAS POR EL USUARIO
     async getSendActivities () {
+      this.loadingActivities = true
       try {
         const url = `/activities/get-activities-by-user/${this.$store.state.user.id}`
         const res = await this.$axios.get(url)
@@ -194,6 +202,8 @@ export default {
         // eslint-disable-next-line no-console
         console.error(error)
         this.mostrarAlerta('red', 'error', 'ERROR AL OBTENER LAS ACTIVIDADES DEL USUARIO')
+      } finally {
+        this.loadingActivities = false
       }
     },
 

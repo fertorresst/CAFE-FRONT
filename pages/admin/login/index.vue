@@ -67,6 +67,8 @@
                 color="#fed55e"
                 rounded
                 elevation="0"
+                :loading="lodaing"
+                :disabled="loading"
                 @click="login()"
               >
                 <strong>Iniciar Sesión</strong>
@@ -89,7 +91,8 @@ export default {
     return {
       email: '',
       password: '',
-      valid: true
+      valid: true,
+      loading: false
     }
   },
 
@@ -143,6 +146,8 @@ export default {
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL INICIAR SESIÓN. VERIFICA TUS CREDENCIALES.')
+      } finally {
+        this.loading = false
       }
     }
   }

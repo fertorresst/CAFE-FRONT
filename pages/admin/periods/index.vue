@@ -915,7 +915,6 @@ export default {
     },
 
     exportPDFReport (report) {
-      // Verifica que estás en el cliente
       if (!process.client) {
         console.error('PDF export can only run on client-side')
         return
@@ -923,71 +922,248 @@ export default {
 
       const { period, students } = report
       const doc = new JSPDF()
-      const fechaInicio = period.per_date_start ? this.moment(period.per_date_start).format('DD/MM/YYYY') : ''
-      const fechaFin = period.per_date_end ? this.moment(period.per_date_end).format('DD/MM/YYYY') : ''
-      const exclusivo = period.per_exclusive ? 'EXCLUSIVO' : 'REGULAR'
 
-      // Encabezado del periodo
-      doc.setFontSize(14)
-      doc.text(`PERIODO: ${period.per_name || ''}`, 14, 15)
-      doc.setFontSize(10)
-      doc.text(`INICIO: ${fechaInicio}    TÉRMINO: ${fechaFin}    TIPO: ${exclusivo}`, 14, 22)
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
 
-      let startY = 30
+      const fechaInicio = period.per_date_start
+        ? this.moment(period.per_date_start).format('DD/MM/YYYY')
+        : ''
 
-      students.forEach((alum, idx) => {
-        // Datos del alumno
-        doc.setFillColor(73, 232, 253) // Amarillo
-        doc.setDrawColor(0)
-        doc.rect(14, startY, 182, 8, 'F')
-        doc.setFontSize(11)
+      const fechaFin = period.per_date_end
+        ? this.moment(period.per_date_end).format('DD/MM/YYYY')
+        : ''
+
+      const tipoPeriodo = period.per_exclusive ? 'EXCLUSIVO' : 'REGULAR'
+
+      // Colores institucionales
+      const azul = [20, 70, 100]
+      const azulClaro = [235, 244, 249]
+      const amarillo = [254, 196, 54]
+      const gris = [100, 100, 100]
+      const grisClaro = [245, 245, 245]
+      const blanco = [255, 255, 255]
+
+      const areaMap = {
+        'DP/VSS': 'DP',
+        'RS/VCI': 'RS',
+        'CEE/EIE': 'CEE',
+        'FCI/ICP': 'FCI',
+        AC: 'AC'
+      }
+
+      // =========================
+      // ENCABEZADO DE CADA PÁGINA
+      // =========================
+      const drawHeader = () => {
+        // Barra superior
+        doc.setFillColor(...azul)
+        doc.rect(0, 0, pageWidth, 30, 'F')
+
+        // Título
+        doc.setTextColor(...blanco)
         doc.setFont('helvetica', 'bold')
-        doc.setTextColor(0)
+        doc.setFontSize(17)
+        doc.text('MiCAFE', 14, 12)
+
+        doc.setFontSize(12)
+        doc.text('REPORTE DE HORAS POR ÁREA', 14, 21)
+
+        // Periodo
+        doc.setTextColor(...azul)
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Periodo ${period.per_name || ''}`, 14, 41)
+
+        // Información del periodo
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(...gris)
+
         doc.text(
-          `${alum.use_nua}   ${alum.use_name.toUpperCase()}   ${alum.use_last_name.toUpperCase()}   ${alum.use_second_last_name ? alum.use_second_last_name.toUpperCase() : ''}`,
-          16, startY + 6
+          `Inicio: ${fechaInicio || '—'}    Fin: ${fechaFin || '—'}    Tipo: ${tipoPeriodo}`,
+          14,
+          48
         )
 
-        startY += 10
+        // Línea divisora
+        doc.setDrawColor(220, 220, 220)
+        doc.line(14, 53, pageWidth - 14, 53)
 
-        // Correo y teléfono
-        doc.setFillColor(73, 232, 253)
-        doc.rect(14, startY, 136, 8, 'F')
-        doc.rect(150, startY, 46, 8, 'F')
-        doc.text(`${alum.use_email}`, 16, startY + 6)
-        doc.text(`${alum.use_phone}`, 152, startY + 6)
+        return 61
+      }
 
-        startY += 10
+      let startY = drawHeader()
 
-        // Sede y carrera
-        doc.setFillColor(73, 232, 253)
-        doc.rect(14, startY, 60, 8, 'F')
-        doc.rect(74, startY, 122, 8, 'F')
-        doc.text(`${alum.use_sede}`, 16, startY + 6)
-        doc.text(`${alum.career_full_name}`, 76, startY + 6)
-
-        startY += 12
-
-        // Horas por área
-        const areaMap = {
-          'DP/VSS': 'DP',
-          'RS/VCI': 'RS',
-          'CEE/EIE': 'CEE',
-          'FCI/ICP': 'FCI',
-          AC: 'AC'
+      students.forEach((alum, idx) => {
+        // =========================
+        // CALCULAR HORAS
+        // =========================
+        const areaHours = {
+          DP: 0,
+          RS: 0,
+          CEE: 0,
+          FCI: 0,
+          AC: 0
         }
-        const areaHours = { DP: 0, RS: 0, CEE: 0, FCI: 0, AC: 0 }
-        alum.activities.forEach((act) => {
-          const key = areaMap[act.act_area]
-          if (key) {
-            areaHours[key] += Number(act.act_hours) || 0
-          }
-        })
 
-        // Tabla de horas
+        if (Array.isArray(alum.activities)) {
+          alum.activities.forEach((act) => {
+            const key = areaMap[act.act_area]
+
+            if (key) {
+              areaHours[key] += Number(act.act_hours) || 0
+            }
+          })
+        }
+
+        const totalHoras =
+          areaHours.DP +
+          areaHours.RS +
+          areaHours.CEE +
+          areaHours.FCI +
+          areaHours.AC
+
+        /*
+        * Reservamos aproximadamente 93 mm para cada alumno.
+        * Si no cabe completo, lo mandamos a una nueva página.
+        */
+        if (startY + 93 > pageHeight - 15) {
+          doc.addPage()
+          startY = drawHeader()
+        }
+
+        // =========================
+        // TARJETA DEL ALUMNO
+        // =========================
+
+        // Cabecera azul
+        doc.setFillColor(...azul)
+        doc.roundedRect(
+          14,
+          startY,
+          pageWidth - 28,
+          13,
+          2,
+          2,
+          'F'
+        )
+
+        doc.setTextColor(...blanco)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(11)
+
+        const nombreCompleto = [
+          alum.use_name,
+          alum.use_last_name,
+          alum.use_second_last_name
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toUpperCase()
+
+        doc.text(
+          `${alum.use_nua || 'S/N'}  ·  ${nombreCompleto}`,
+          18,
+          startY + 8.5
+        )
+
+        startY += 17
+
+        // =========================
+        // INFORMACIÓN DEL ALUMNO
+        // =========================
+
+        doc.setFillColor(...grisClaro)
+        doc.roundedRect(
+          14,
+          startY,
+          pageWidth - 28,
+          27,
+          2,
+          2,
+          'F'
+        )
+
+        const labelX1 = 18
+        const valueX1 = 36
+
+        const labelX2 = 108
+        const valueX2 = 127
+
+        doc.setFontSize(8.5)
+
+        // Correo
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...gris)
+        doc.text('CORREO', labelX1, startY + 8)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(30, 30, 30)
+        doc.text(
+          String(alum.use_email || '—'),
+          valueX1,
+          startY + 8
+        )
+
+        // Teléfono
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...gris)
+        doc.text('TELÉFONO', labelX2, startY + 8)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(30, 30, 30)
+        doc.text(
+          String(alum.use_phone || '—'),
+          valueX2,
+          startY + 8
+        )
+
+        // Sede
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...gris)
+        doc.text('SEDE', labelX1, startY + 18)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(30, 30, 30)
+        doc.text(
+          String(alum.use_sede || '—'),
+          valueX1,
+          startY + 18
+        )
+
+        // Carrera
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...gris)
+        doc.text('CARRERA', labelX2, startY + 18)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(30, 30, 30)
+
+        const carrera = doc.splitTextToSize(
+          String(alum.career_full_name || '—'),
+          66
+        )
+
+        doc.text(
+          carrera,
+          valueX2,
+          startY + 18
+        )
+
+        startY += 32
+
+        // =========================
+        // TABLA DE HORAS
+        // =========================
+
         autoTable(doc, {
           startY,
-          head: [['ÁREA', 'HORAS']],
+
+          head: [
+            ['ÁREA', 'HORAS']
+          ],
+
           body: [
             ['DP/VSS', areaHours.DP],
             ['RS/VCI', areaHours.RS],
@@ -995,20 +1171,107 @@ export default {
             ['FCI/ICP', areaHours.FCI],
             ['AC', areaHours.AC]
           ],
-          theme: 'grid',
-          styles: { halign: 'left', fillColor: [254, 213, 94] },
-          headStyles: { fillColor: [73, 232, 253], textColor: 0 },
-          margin: { left: 14, right: 14 }
+
+          foot: [
+            ['TOTAL DE HORAS', `${totalHoras} h`]
+          ],
+
+          theme: 'plain',
+
+          margin: {
+            left: 14,
+            right: 14
+          },
+
+          styles: {
+            font: 'helvetica',
+            fontSize: 9,
+            cellPadding: 3,
+            textColor: [40, 40, 40],
+            lineColor: [220, 220, 220],
+            lineWidth: 0.2
+          },
+
+          headStyles: {
+            fillColor: azul,
+            textColor: blanco,
+            fontStyle: 'bold',
+            halign: 'left'
+          },
+
+          bodyStyles: {
+            fillColor: blanco
+          },
+
+          alternateRowStyles: {
+            fillColor: azulClaro
+          },
+
+          footStyles: {
+            fillColor: amarillo,
+            textColor: [30, 30, 30],
+            fontStyle: 'bold'
+          },
+
+          columnStyles: {
+            0: {
+              cellWidth: 135
+            },
+            1: {
+              halign: 'center',
+              fontStyle: 'bold'
+            }
+          }
         })
 
-        startY = doc.lastAutoTable.finalY + 10
+        startY = doc.lastAutoTable.finalY + 11
 
-        // Salto de página si es necesario
-        if (startY > 250 && idx < students.length - 1) {
-          doc.addPage()
-          startY = 15
+        // Separador entre alumnos
+        if (idx < students.length - 1) {
+          doc.setDrawColor(225, 225, 225)
+          doc.line(
+            14,
+            startY - 5,
+            pageWidth - 14,
+            startY - 5
+          )
         }
       })
+
+      // =========================
+      // PIE Y NÚMERO DE PÁGINAS
+      // =========================
+
+      const pageCount = doc.internal.getNumberOfPages()
+
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+
+        doc.setDrawColor(220, 220, 220)
+        doc.line(
+          14,
+          pageHeight - 14,
+          pageWidth - 14,
+          pageHeight - 14
+        )
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(...gris)
+
+        doc.text(
+          'MiCAFE · Reporte de horas por área',
+          14,
+          pageHeight - 8
+        )
+
+        doc.text(
+          `Página ${i} de ${pageCount}`,
+          pageWidth - 14,
+          pageHeight - 8,
+          { align: 'right' }
+        )
+      }
 
       doc.save(`Reporte_${period.per_name}.pdf`)
     },

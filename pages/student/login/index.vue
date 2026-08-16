@@ -69,6 +69,8 @@
                 color="#fed55e"
                 rounded
                 elevation="0"
+                :loading="loading"
+                :diable="loading"
                 @click="login()"
               >
                 <strong>Iniciar Sesión</strong>
@@ -119,6 +121,7 @@ export default {
       email: '',
       password: '',
       valid: true,
+      loading: false,
 
       dialogsKey: {
         register: 0
@@ -189,6 +192,7 @@ export default {
     },
 
     async login () {
+      this.loading = true
       try {
         const res = await this.$axios.post('/users/login', {
           email: this.email,
@@ -201,6 +205,8 @@ export default {
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL INICIAR SESIÓN. VERIFICA TUS CREDENCIALES.')
+      } finally {
+        this.loading = false
       }
     },
 

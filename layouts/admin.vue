@@ -206,7 +206,7 @@ export default {
           { withCredentials: true }
         )
         if (res.data.success) {
-          this.$router.push('/admin/login')
+          this.$router.push('/')
           this.mostrarAlerta(
             'green',
             'success',
