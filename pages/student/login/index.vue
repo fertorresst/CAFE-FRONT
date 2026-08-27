@@ -220,11 +220,10 @@ export default {
         if (res.data.success) {
           this.mostrarAlerta('green', 'success', res.data.message)
           this.clean()
-        } else {
-          this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
-        this.mostrarAlerta('red', 'error', 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.')
+        const message = e.response?.data?.message || 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.'
+        this.mostrarAlerta('red', 'error', message)
       }
     }
   }
