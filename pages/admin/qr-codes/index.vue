@@ -223,7 +223,7 @@
 
         <v-card-text class="py-3">
           <h3 class="text-justify subtitle black--text">
-            {{ isEditing ? 'Actualiza' : 'Sube' }} el código QR para una carrera y área específica.
+            {{ isEditing ? 'Actualiza el codigo QR para la carrera y área seleccionada' : 'Sube el código QR para una o varias carreras y un área específica.' }}
           </h3>
         </v-card-text>
 
@@ -234,15 +234,19 @@
             lazy-validation
             class="px-6 black--text"
           >
-            <h3>CARRERA *</h3>
+            <h3>{{ isEditing ? 'CARRERA *' : 'CARRERAS *' }}</h3>
             <v-select
               v-model="formData.career"
               :items="careerItems"
               :rules="[requiredRule]"
               :disabled="isEditing"
+              :multiple="!isEditing"
+              :chips="!isEditing"
+              :deletable-chips="!isEditing"
               outlined
               dense
               required
+              :placeholder="isEditing ? '' : 'Selecciona una o varias carreras'"
             />
 
             <h3>ÁREA *</h3>
@@ -454,7 +458,7 @@ export default {
       filterArea: null,
 
       formData: {
-        career: '',
+        career: [],
         area: '',
         description: '',
         qrImage: null,
@@ -471,7 +475,13 @@ export default {
       ],
 
       // Reglas de validación
-      requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
+      requiredRule: (value) => {
+        if (Array.isArray(value)) {
+          return value.length > 0 || 'ESTE CAMPO ES REQUERIDO'
+        }
+
+        return !!value || 'ESTE CAMPO ES REQUERIDO'
+      },
       imageRule: (value) => {
         if (!value) { return true }
         const size = value.size / 1024 / 1024 // MB
@@ -571,7 +581,7 @@ export default {
     openCreateDialog () {
       this.isEditing = false
       this.formData = {
-        career: '',
+        career: [],
         area: '',
         description: '',
         qrImage: null,
@@ -623,38 +633,115 @@ export default {
       }
 
       this.loading = true
+
       try {
         const formData = new FormData()
-        formData.append('career', this.formData.career)
+
+        if (this.isEditing) {
+          formData.append('career', this.formData.career)
+        } else {
+          formData.append(
+            'careers',
+            JSON.stringify(this.formData.career)
+          )
+        }
+
         formData.append('area', this.formData.area)
-        formData.append('description', this.formData.description || '')
-        formData.append('active', this.formData.active ? 'true' : 'false')
+        formData.append(
+          'description',
+          this.formData.description || ''
+        )
+        formData.append(
+          'active',
+          this.formData.active ? 'true' : 'false'
+        )
 
         if (this.formData.qrImage) {
-          formData.append('qrImage', this.formData.qrImage)
+          formData.append(
+            'qrImage',
+            this.formData.qrImage
+          )
         }
 
         if (this.isEditing) {
-          const res = await this.$axios.put(`/qr-codes/update-qr-code/${this.selectedQR.qr_id}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
+          const res = await this.$axios.put(
+        `/qr-codes/update-qr-code/${this.selectedQR.qr_id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+          )
+
           if (res.data.success) {
-            this.mostrarAlerta('green', 'success', 'CÓDIGO QR ACTUALIZADO CORRECTAMENTE')
+            this.mostrarAlerta(
+              'green',
+              'success',
+              'CÓDIGO QR ACTUALIZADO CORRECTAMENTE'
+            )
+
             await this.loadQRCodes()
             this.closeFormDialog()
           }
         } else {
-          const res = await this.$axios.post('/qr-codes/create-qr-code', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
+          const res = await this.$axios.post(
+            '/qr-codes/create-qr-code',
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          )
+
           if (res.data.success) {
-            this.mostrarAlerta('green', 'success', 'CÓDIGO QR CREADO CORRECTAMENTE')
+            this.mostrarAlerta(
+              'green',
+              'success',
+              res.data.message ||
+            'CÓDIGOS QR CREADOS CORRECTAMENTE'
+            )
+
             await this.loadQRCodes()
             this.closeFormDialog()
           }
         }
       } catch (error) {
-        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL GUARDAR EL CÓDIGO QR')
+        const data = error.response?.data
+
+        if (
+          data?.existingCareers &&
+      Array.isArray(data.existingCareers) &&
+      data.existingCareers.length > 0
+        ) {
+          const careerNames = data.existingCareers.map(
+            (careerCode) => {
+              const career = this.careerItems.find(
+                item => item.value === careerCode
+              )
+
+              return career
+                ? career.text
+                : careerCode
+            }
+          )
+
+          this.mostrarAlerta(
+            'red',
+            'error',
+        `YA EXISTE UN CÓDIGO QR PARA: ${careerNames.join(', ')} EN EL ÁREA ${this.formData.area}`
+          )
+
+          return
+        }
+
+        this.mostrarAlerta(
+          'red',
+          'error',
+          data?.message ||
+        'ERROR AL GUARDAR EL CÓDIGO QR'
+        )
       } finally {
         this.loading = false
       }
