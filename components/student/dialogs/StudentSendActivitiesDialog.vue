@@ -251,7 +251,8 @@
                   color="#fed55e"
                   rounded
                   elevation="0"
-                  :disabled="!currentActivityData.evidence"
+                  :loading="loading"
+                  :disabled="loading || !currentActivityData.evidence"
                   @click="sendActivity()"
                 >
                   <strong>ENVIAR</strong>
@@ -440,6 +441,7 @@ export default {
           this.mostrarAlerta('red', 'error', 'ERROR AL VALIDAR EL FORMULARIO')
           return
         }
+        this.loading = true
         // Preparar los datos para enviar
         const formData = new FormData()
 
@@ -474,6 +476,8 @@ export default {
         // eslint-disable-next-line no-console
         console.error('ERROR AL ENVIAR ACTIVIDAD:', error)
         this.mostrarAlerta('red', 'error', error)
+      } finally {
+        this.loading = false
       }
     }
   }

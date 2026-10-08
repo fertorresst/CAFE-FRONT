@@ -338,7 +338,7 @@ export default {
     },
 
     getEvidenceUrl (link) {
-      return `http://localhost:5010${link}`
+      return `${this.$axios.defaults.baseURL.replace('/api', '')}${link}`
     },
 
     onPanelChange (newIndex) {

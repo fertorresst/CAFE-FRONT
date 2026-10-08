@@ -53,7 +53,7 @@ export default {
   axios: {
     credentials: true,
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: 'http://localhost:5010/api'
+    baseURL: process.env.API_BASE_URL || 'http://localhost:5010/api'
   },
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify

@@ -8,7 +8,7 @@
     >
       <v-spacer />
       <v-img
-        src="/MiCAFÉ.svg"
+        src="/MiCAFE.svg"
         alt="MiCAFE"
         max-width="120"
         contain
@@ -82,7 +82,7 @@ export default {
       try {
         const res = await this.$axios.post('/users/logout', {}, { withCredentials: true })
         if (res.data.success) {
-          this.$router.push('/student/login')
+          this.$router.push('/')
           this.mostrarAlerta('green', 'success', 'SESIÓN CERRADA CORRECTAMENTE.')
         } else {
           this.mostrarAlerta('red', 'error', res.data.message)

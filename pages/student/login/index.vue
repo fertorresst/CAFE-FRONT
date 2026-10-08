@@ -5,7 +5,7 @@
     >
       <v-col cols="12" align="center" justify="center">
         <v-img
-          src="/MiCAFÉ.svg"
+          src="/MiCAFE.svg"
           alt="MiCAFE"
           max-width="300"
           contain
@@ -69,6 +69,8 @@
                 color="#fed55e"
                 rounded
                 elevation="0"
+                :loading="loading"
+                :disabled="loading"
                 @click="login()"
               >
                 <strong>Iniciar Sesión</strong>
@@ -119,6 +121,7 @@ export default {
       email: '',
       password: '',
       valid: true,
+      loading: false,
 
       dialogsKey: {
         register: 0
@@ -189,6 +192,7 @@ export default {
     },
 
     async login () {
+      this.loading = true
       try {
         const res = await this.$axios.post('/users/login', {
           email: this.email,
@@ -201,6 +205,8 @@ export default {
         }
       } catch (e) {
         this.mostrarAlerta('red', 'error', 'ERROR AL INICIAR SESIÓN. VERIFICA TUS CREDENCIALES.')
+      } finally {
+        this.loading = false
       }
     },
 
@@ -214,11 +220,10 @@ export default {
         if (res.data.success) {
           this.mostrarAlerta('green', 'success', res.data.message)
           this.clean()
-        } else {
-          this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
-        this.mostrarAlerta('red', 'error', 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.')
+        const message = e.response?.data?.message || 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.'
+        this.mostrarAlerta('red', 'error', message)
       }
     }
   }
