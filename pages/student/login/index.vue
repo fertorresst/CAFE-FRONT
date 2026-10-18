@@ -246,4 +246,3 @@ export default {
   border-radius: 20px;
 }
 </style>
-
