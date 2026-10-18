@@ -176,8 +176,8 @@ export default {
           this.dialogRegister = false
           break
         case 'createUser':
+          // El diálogo se cierra solo si el servidor confirma el registro (ver createUser)
           this.createUser(data.data)
-          this.clean()
           break
         default:
           break
@@ -220,6 +220,8 @@ export default {
         if (res.data.success) {
           this.mostrarAlerta('green', 'success', res.data.message)
           this.clean()
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
         const message = e.response?.data?.message || 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.'

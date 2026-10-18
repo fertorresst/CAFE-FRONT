@@ -11,7 +11,7 @@
     >
       <v-card-text class="bg-blue white--text py-4">
         <h2>
-          REGISTRARSE
+          {{ adminMode ? 'REGISTRAR ALUMNO' : 'REGISTRARSE' }}
         </h2>
       </v-card-text>
 
@@ -106,6 +106,7 @@
                 v-model="email"
                 :rules="[requiredRule, emailRule]"
                 :disabled="emailVerified"
+                autocomplete="off"
                 :append-icon="emailVerified ? 'mdi-check-circle' : ''"
                 :success="emailVerified"
                 type="email"
@@ -189,6 +190,7 @@
               <v-text-field
                 v-model="phone"
                 :rules="[requiredRule, phoneRule]"
+                autocomplete="off"
                 type="tel"
                 outlined
                 dense
@@ -201,6 +203,7 @@
               <v-text-field
                 v-model="password"
                 :rules="[requiredRule, passwordRule]"
+                autocomplete="new-password"
                 type="password"
                 outlined
                 dense
@@ -214,6 +217,7 @@
                 v-model="passwordConfirm"
                 :rules="[requiredRule, passwordRule, passwordConfirmRule]"
                 :disabled="!password"
+                autocomplete="new-password"
                 type="password"
                 outlined
                 dense

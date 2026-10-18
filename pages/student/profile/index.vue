@@ -274,15 +274,78 @@
               required
             />
 
-            <h3>CORREO ELECTRÓNICO *</h3>
+            <h3>CORREO INSTITUCIONAL (@ugto.mx) *</h3>
             <v-text-field
               v-model="editData.email"
               :rules="[requiredRule, emailRule]"
+              :append-icon="emailChanged && emailVerified ? 'mdi-check-circle' : ''"
+              :success="emailChanged && emailVerified"
               outlined
               dense
               type="email"
               required
             />
+
+            <!-- Si cambia el correo, el nuevo debe verificarse con un código -->
+            <div v-if="emailChanged" class="mb-4">
+              <v-alert
+                v-if="!emailVerified"
+                type="info"
+                dense
+                text
+                class="mb-3"
+              >
+                CAMBIASTE TU CORREO. DEBES VERIFICAR EL NUEVO CORREO CON UN CÓDIGO PARA GUARDAR.
+              </v-alert>
+
+              <v-btn
+                v-if="!emailVerified"
+                color="#fed55e"
+                small
+                rounded
+                elevation="0"
+                :loading="sendingCode"
+                :disabled="!isInstitutionalEmail || cooldown > 0"
+                @click="sendCode"
+              >
+                <strong>{{ sendButtonText }}</strong>
+              </v-btn>
+
+              <div v-if="codeSent && !emailVerified" class="mt-4">
+                <h3>CÓDIGO DE VERIFICACIÓN</h3>
+                <v-text-field
+                  v-model="code"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="6"
+                  placeholder="000000"
+                  outlined
+                  dense
+                  @keyup.enter="verifyCode"
+                />
+                <v-btn
+                  color="#fed55e"
+                  small
+                  rounded
+                  elevation="0"
+                  :loading="verifyingCode"
+                  :disabled="code.length !== 6"
+                  @click="verifyCode"
+                >
+                  <strong>VERIFICAR CÓDIGO</strong>
+                </v-btn>
+              </div>
+
+              <v-alert
+                v-if="verifyMessage"
+                :type="verifyMessageType"
+                dense
+                text
+                class="mt-3 mb-0"
+              >
+                {{ verifyMessage }}
+              </v-alert>
+            </div>
 
             <h3>CARRERA *</h3>
             <v-select
@@ -329,7 +392,7 @@
             color="#fed55e"
             rounded
             elevation="0"
-            :disabled="!valid || loading"
+            :disabled="!valid || loading || (emailChanged && !emailVerified)"
             :loading="loading"
             @click="saveProfile"
           >
@@ -381,6 +444,19 @@ export default {
       dialogLegend: false,
       valid: false,
       loading: false,
+
+      // Verificación del nuevo correo (solo si el alumno lo cambia)
+      verifiedEmail: '',
+      verificationToken: '',
+      verifiedAt: 0,
+      codeSent: false,
+      code: '',
+      sendingCode: false,
+      verifyingCode: false,
+      cooldown: 0,
+      cooldownTimer: null,
+      verifyMessage: '',
+      verifyMessageType: 'info',
       editData: {
         nua: '',
         name: '',
@@ -394,7 +470,7 @@ export default {
 
       // Reglas de validación
       requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
-      emailRule: value => /.+@.+\..+/.test(value) || 'CORREO ELECTRÓNICO INVÁLIDO',
+      emailRule: value => /^[^\s@]+@ugto\.mx$/i.test((value || '').trim()) || 'DEBE SER UN CORREO INSTITUCIONAL (@ugto.mx)',
       phoneRule: (value) => {
         const phone = value ? value.replace(/\s/g, '') : ''
         return phone.length === 10 || 'EL TELÉFONO DEBE TENER 10 DÍGITOS'
@@ -443,11 +519,48 @@ export default {
   computed: {
     ...mapState({
       student: state => state.user
-    })
+    }),
+
+    normalizedEmail () {
+      return (this.editData.email || '').trim().toLowerCase()
+    },
+
+    // El alumno escribió un correo distinto al que ya tiene en su cuenta
+    emailChanged () {
+      return this.normalizedEmail !== String(this.profile.email || '').trim().toLowerCase()
+    },
+
+    isInstitutionalEmail () {
+      return /^[^\s@]+@ugto\.mx$/.test(this.normalizedEmail)
+    },
+
+    // Está verificado solo si el código corresponde exactamente al correo que está escrito ahora
+    emailVerified () {
+      return !!this.verificationToken && this.verifiedEmail === this.normalizedEmail
+    },
+
+    sendButtonText () {
+      if (this.cooldown > 0) { return `REENVIAR EN ${this.cooldown} s` }
+      return this.codeSent ? 'REENVIAR CÓDIGO' : 'ENVIAR CÓDIGO'
+    }
+  },
+
+  watch: {
+    'editData.email' () {
+      if (!this.emailVerified) {
+        this.codeSent = false
+        this.code = ''
+        this.verifyMessage = ''
+      }
+    }
   },
 
   mounted () {
     this.loadProfile()
+  },
+
+  beforeDestroy () {
+    this.stopCooldown()
   },
 
   methods: {
@@ -467,6 +580,84 @@ export default {
       setTimeout(() => {
         this.$store.commit('modifyAlert', false)
       }, 3000)
+    },
+
+    setVerifyMessage (type, message) {
+      this.verifyMessageType = type
+      this.verifyMessage = message
+    },
+
+    startCooldown (seconds) {
+      this.stopCooldown()
+      this.cooldown = seconds
+      this.cooldownTimer = setInterval(() => {
+        this.cooldown--
+        if (this.cooldown <= 0) { this.stopCooldown() }
+      }, 1000)
+    },
+
+    stopCooldown () {
+      if (this.cooldownTimer) {
+        clearInterval(this.cooldownTimer)
+        this.cooldownTimer = null
+      }
+      this.cooldown = 0
+    },
+
+    resetVerification () {
+      this.stopCooldown()
+      this.verifiedEmail = ''
+      this.verificationToken = ''
+      this.verifiedAt = 0
+      this.codeSent = false
+      this.code = ''
+      this.verifyMessage = ''
+    },
+
+    // Pide al servidor que envíe el código al nuevo correo
+    async sendCode () {
+      if (!this.isInstitutionalEmail || this.cooldown > 0) { return }
+      this.sendingCode = true
+      this.verifyMessage = ''
+      try {
+        const res = await this.$axios.post('/users/send-verification-code', {
+          email: this.editData.email.trim()
+        })
+        this.codeSent = true
+        this.code = ''
+        this.setVerifyMessage('success', res.data.message)
+        this.startCooldown(60)
+      } catch (e) {
+        this.setVerifyMessage('error', e.response?.data?.message || 'NO SE PUDO ENVIAR EL CÓDIGO. INTENTA DE NUEVO.')
+      } finally {
+        this.sendingCode = false
+      }
+    },
+
+    // Comprueba el código; si es correcto el servidor devuelve un token temporal
+    async verifyCode () {
+      if (!/^\d{6}$/.test(this.code)) {
+        this.setVerifyMessage('error', 'EL CÓDIGO DEBE TENER 6 DÍGITOS')
+        return
+      }
+      this.verifyingCode = true
+      try {
+        const res = await this.$axios.post('/users/verify-email-code', {
+          email: this.editData.email.trim(),
+          code: this.code
+        })
+        this.verificationToken = res.data.verificationToken
+        this.verifiedEmail = this.normalizedEmail
+        this.verifiedAt = Date.now()
+        this.codeSent = false
+        this.code = ''
+        this.stopCooldown()
+        this.setVerifyMessage('success', res.data.message)
+      } catch (e) {
+        this.setVerifyMessage('error', e.response?.data?.message || 'NO SE PUDO VERIFICAR EL CÓDIGO. INTENTA DE NUEVO.')
+      } finally {
+        this.verifyingCode = false
+      }
     },
 
     async loadProfile () {
@@ -496,6 +687,7 @@ export default {
     },
 
     openEditDialog () {
+      this.resetVerification()
       this.editData = {
         nua: this.profile.nua,
         name: this.profile.name,
@@ -511,6 +703,7 @@ export default {
 
     closeEditDialog () {
       this.dialogEdit = false
+      this.resetVerification()
       if (this.$refs.form) {
         this.$refs.form.reset()
       }
@@ -519,6 +712,19 @@ export default {
     async saveProfile () {
       if (!this.$refs.form.validate()) {
         return
+      }
+
+      // Si cambió el correo, debe estar verificado (el token dura 15 minutos en el servidor)
+      if (this.emailChanged) {
+        if (!this.emailVerified) {
+          this.setVerifyMessage('warning', 'DEBES VERIFICAR EL NUEVO CORREO ANTES DE GUARDAR')
+          return
+        }
+        if (Date.now() - this.verifiedAt > 14 * 60 * 1000) {
+          this.resetVerification()
+          this.setVerifyMessage('warning', 'LA VERIFICACIÓN EXPIRÓ. VUELVE A VERIFICAR TU CORREO.')
+          return
+        }
       }
 
       this.loading = true
@@ -533,6 +739,9 @@ export default {
           phone,
           career: this.editData.career,
           sede: this.editData.sede
+        }
+        if (this.emailChanged) {
+          data.verificationToken = this.verificationToken
         }
 
         const res = await this.$axios.put('/users/update-profile', data)
