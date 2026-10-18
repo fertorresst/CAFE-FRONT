@@ -114,7 +114,7 @@
                 required
               />
               <v-btn
-                v-if="!emailVerified"
+                v-if="!adminMode && !emailVerified"
                 color="#fed55e"
                 small
                 rounded
@@ -126,7 +126,7 @@
                 <strong>{{ sendButtonText }}</strong>
               </v-btn>
               <v-btn
-                v-else
+                v-else-if="!adminMode"
                 color="black"
                 small
                 rounded
@@ -138,7 +138,7 @@
             </v-col>
 
             <v-col
-              v-if="codeSent && !emailVerified"
+              v-if="!adminMode && codeSent && !emailVerified"
               lg="6"
               md="6"
               sm="12"
@@ -170,7 +170,7 @@
             </v-col>
           </v-row>
 
-          <v-row v-if="verifyMessage">
+          <v-row v-if="!adminMode && verifyMessage">
             <v-col cols="12" class="py-0">
               <v-alert
                 :type="verifyMessageType"
@@ -250,6 +250,11 @@
 export default {
   props: {
     value: {
+      type: Boolean,
+      default: false
+    },
+    // true cuando lo usa un administrador: el correo no se verifica con código
+    adminMode: {
       type: Boolean,
       default: false
     }
@@ -440,19 +445,19 @@ export default {
     },
 
     createUser () {
-      if (!this.emailVerified) {
+      // En modo administrador el correo no se verifica con código
+      if (!this.adminMode && !this.emailVerified) {
         this.setVerifyMessage('warning', 'DEBES VERIFICAR TU CORREO ELECTRÓNICO ANTES DE REGISTRARTE')
         return
       }
       // El token de verificación dura 15 minutos en el servidor
-      if (Date.now() - this.verifiedAt > 14 * 60 * 1000) {
+      if (!this.adminMode && Date.now() - this.verifiedAt > 14 * 60 * 1000) {
         this.resetVerification()
         this.setVerifyMessage('warning', 'LA VERIFICACIÓN EXPIRÓ. VUELVE A VERIFICAR TU CORREO.')
         return
       }
       if (!this.validForm) { return }
       const data = {
-        verificationToken: this.verificationToken,
         email: this.email.trim(),
         password: this.password,
         name: this.name,
@@ -462,6 +467,10 @@ export default {
         nua: this.nua,
         career: this.career,
         sede: this.sede
+      }
+      // El registro público lleva el token de verificación; el de administrador no
+      if (!this.adminMode) {
+        data.verificationToken = this.verificationToken
       }
       this.$emit('action', { data, action: 'createUser' })
     },

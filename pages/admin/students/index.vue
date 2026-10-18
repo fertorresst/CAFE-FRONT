@@ -142,6 +142,7 @@
     <StudentRegisterDialog
       :key="key.registerStudent"
       v-model="dialogRegisterStudent"
+      admin-mode
       @action="decoder"
     />
 
@@ -447,7 +448,7 @@ export default {
 
     async createUser (data) {
       try {
-        const res = await this.$axios.post('/users/create-user', data)
+        const res = await this.$axios.post('/users/admin-create-user', data)
         if (res.data.success) {
           this.mostrarAlerta('green', 'success', res.data.message)
           this.clean()
@@ -455,7 +456,8 @@ export default {
           this.mostrarAlerta('red', 'error', res.data.message)
         }
       } catch (e) {
-        this.mostrarAlerta('red', 'error', 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.')
+        const message = e.response?.data?.message || 'ERROR AL CREAR USUARIO. ERROR INTERNO DEL SERVIDOR.'
+        this.mostrarAlerta('red', 'error', message)
       }
     },
 
