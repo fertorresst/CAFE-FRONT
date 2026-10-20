@@ -356,7 +356,7 @@ export default {
 
   methods: {
     async getAllPeriods () {
-      const url = '/periods/get-all-periods'
+      const url = '/users/available-periods'
       await this.$axios.get(url)
         .then((res) => {
           if (res.data.success) {

@@ -39,6 +39,7 @@
               ref="form"
               v-model="valid"
               lazy-validation
+              @submit.prevent="login"
             >
               <h3 style="color: white;">
                 Correo
@@ -66,12 +67,12 @@
                 required
               />
               <v-btn
+                type="submit"
                 color="#fed55e"
                 rounded
                 elevation="0"
                 :loading="loading"
                 :disabled="loading"
-                @click="login()"
               >
                 <strong>Iniciar Sesión</strong>
               </v-btn>
