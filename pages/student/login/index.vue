@@ -77,6 +77,16 @@
                 <strong>Iniciar Sesión</strong>
               </v-btn>
             </v-form>
+
+            <v-btn
+              class="mt-3"
+              color="#fed55e"
+              small
+              text
+              @click="forgotDialog()"
+            >
+              <strong>¿OLVIDASTE TU CONTRASEÑA?</strong>
+            </v-btn>
           </v-card-text>
 
           <v-card-text>
@@ -105,15 +115,23 @@
       v-model="dialogRegister"
       @action="decoder"
     />
+
+    <StudentForgotPasswordDialog
+      :key="dialogsKey.forgot"
+      v-model="dialogForgot"
+      :initial-email="email"
+      @action="decoder"
+    />
   </v-container>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import StudentRegisterDialog from '../../../components/student/dialogs/StudentRegisterDialog'
+import StudentForgotPasswordDialog from '../../../components/student/dialogs/StudentForgotPasswordDialog'
 
 export default {
-  components: { StudentRegisterDialog },
+  components: { StudentRegisterDialog, StudentForgotPasswordDialog },
 
   layout: 'empty',
 
@@ -125,11 +143,15 @@ export default {
       loading: false,
 
       dialogsKey: {
-        register: 0
+        register: 0,
+        forgot: 0
       },
 
       // DIALOG DE REGISTRO
-      dialogRegister: false
+      dialogRegister: false,
+
+      // DIALOG DE RECUPERAR CONTRASEÑA
+      dialogForgot: false
     }
   },
 
@@ -180,6 +202,18 @@ export default {
           // El diálogo se cierra solo si el servidor confirma el registro (ver createUser)
           this.createUser(data.data)
           break
+        case 'passwordReset':
+          // Contraseña cambiada: se cierra el diálogo y se deja listo el correo para iniciar sesión
+          this.mostrarAlerta('green', 'success', data.message)
+          this.email = data.email
+          this.password = ''
+          this.dialogForgot = false
+          this.dialogsKey.forgot++
+          break
+        case 'forgotCancel':
+          this.dialogForgot = false
+          this.dialogsKey.forgot++
+          break
         default:
           break
       }
@@ -213,6 +247,10 @@ export default {
 
     registerDialog () {
       this.dialogRegister = true
+    },
+
+    forgotDialog () {
+      this.dialogForgot = true
     },
 
     async createUser (data) {
