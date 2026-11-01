@@ -26,7 +26,7 @@
           <!-- Paso 1: correo -->
           <div v-if="step === 1">
             <p class="text-justify">
-              Escribe el correo institucional con el que te registraste en MiCAFÉ.
+              Escribe el correo institucional con el que te registraste en MiCAFE.
               Te enviaremos un código para que puedas crear una contraseña nueva.
             </p>
             <h3>CORREO INSTITUCIONAL (@ugto.mx)</h3>
