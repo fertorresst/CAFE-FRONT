@@ -145,15 +145,13 @@
           </v-card-text>
 
           <!-- Acciones -->
-          <v-card-actions v-if="canEditProfile" class="pa-6 pt-0">
+          <v-card-actions v-if="canEditProfile" class="pa-6 pt-0" :class="$vuetify.breakpoint.xs ? 'flex-column' : ''">
+            <v-btn color="primary" outlined rounded class="px-5" :block="$vuetify.breakpoint.xs" @click="openPasswordDialog">
+              <v-icon left>mdi-lock-reset</v-icon>
+              <strong>CAMBIAR CONTRASEÑA</strong>
+            </v-btn>
             <v-spacer />
-            <v-btn
-              color="#fed55e"
-              elevation="0"
-              rounded
-              class="px-8"
-              @click="openEditDialog"
-            >
+            <v-btn color="#fed55e" elevation="0" rounded class="px-8" :block="$vuetify.breakpoint.xs" @click="openEditDialog">
               <v-icon left>mdi-pencil</v-icon>
               <strong>EDITAR PERFIL</strong>
             </v-btn>
@@ -277,6 +275,27 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog para cambiar contraseña -->
+    <v-dialog v-model="dialogPassword" max-width="520" persistent>
+      <v-card class="rounded-xl">
+        <v-card-title class="bg-blue white--text justify-center py-4"><h2>CAMBIAR CONTRASEÑA</h2></v-card-title>
+        <v-card-text class="pt-5 pb-0">
+          <p class="mb-4">Por seguridad, confirma tu contraseña actual antes de establecer una nueva.</p>
+          <v-form ref="passwordForm" v-model="passwordValid" lazy-validation>
+            <v-text-field v-model="passwordData.currentPassword" label="CONTRASEÑA ACTUAL *" :type="showCurrentPassword ? 'text' : 'password'" :append-icon="showCurrentPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showCurrentPassword = !showCurrentPassword" :rules="[requiredRule]" outlined dense autocomplete="current-password" />
+            <v-text-field v-model="passwordData.newPassword" label="NUEVA CONTRASEÑA *" :type="showNewPassword ? 'text' : 'password'" :append-icon="showNewPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showNewPassword = !showNewPassword" :rules="[requiredRule, passwordRule]" outlined dense autocomplete="new-password" />
+            <v-text-field v-model="passwordData.confirmPassword" label="CONFIRMAR NUEVA CONTRASEÑA *" :type="showConfirmPassword ? 'text' : 'password'" :append-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showConfirmPassword = !showConfirmPassword" :rules="[requiredRule, confirmPasswordRule]" outlined dense autocomplete="new-password" />
+          </v-form>
+          <p class="caption mb-1">La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.</p>
+          <p class="caption">Al cambiarla, tendrás que utilizar la nueva contraseña en tu próximo inicio de sesión.</p>
+        </v-card-text>
+        <v-card-actions class="justify-center pb-5">
+          <v-btn text rounded @click="closePasswordDialog" :disabled="passwordLoading">CANCELAR</v-btn>
+          <v-btn color="#fed55e" rounded elevation="0" :disabled="!passwordValid || passwordLoading" :loading="passwordLoading" @click="changePassword"><strong>ACTUALIZAR CONTRASEÑA</strong></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Modal de ayuda -->
     <LegendHelpDialog v-model="dialogLegend" page="general" />
   </v-col>
@@ -315,7 +334,14 @@ export default {
         updatedAt: null
       },
       dialogEdit: false,
+      dialogPassword: false,
       dialogLegend: false,
+      passwordValid: false,
+      passwordLoading: false,
+      showCurrentPassword: false,
+      showNewPassword: false,
+      showConfirmPassword: false,
+      passwordData: { currentPassword: '', newPassword: '', confirmPassword: '' },
       valid: false,
       loading: false,
       editData: {
@@ -328,6 +354,8 @@ export default {
 
       // Reglas de validación
       requiredRule: value => !!value || 'ESTE CAMPO ES REQUERIDO',
+      passwordRule: value => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(value || '') || 'MÍNIMO 8 CARACTERES, CON MAYÚSCULA, MINÚSCULA, NÚMERO Y CARÁCTER ESPECIAL',
+      confirmPasswordRule: value => value === this.passwordData.newPassword || 'LAS CONTRASEÑAS NO COINCIDEN',
       emailRule: value => /.+@.+\..+/.test(value) || 'CORREO ELECTRÓNICO INVÁLIDO',
       phoneRule: (value) => {
         const phone = value ? value.replace(/\s/g, '') : ''
@@ -433,6 +461,39 @@ export default {
         this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL ACTUALIZAR EL PERFIL')
       } finally {
         this.loading = false
+      }
+    },
+
+    openPasswordDialog () {
+      this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' }
+      this.passwordValid = false
+      this.showCurrentPassword = false
+      this.showNewPassword = false
+      this.showConfirmPassword = false
+      this.dialogPassword = true
+    },
+
+    closePasswordDialog () {
+      this.dialogPassword = false
+      this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' }
+      if (this.$refs.passwordForm) this.$refs.passwordForm.resetValidation()
+    },
+
+    async changePassword () {
+      if (!this.$refs.passwordForm.validate()) return
+      this.passwordLoading = true
+      try {
+        const res = await this.$axios.patch('/admin/change-own-password', this.passwordData)
+        if (res.data.success) {
+          this.closePasswordDialog()
+          this.mostrarAlerta('green', 'success', 'CONTRASEÑA ACTUALIZADA CORRECTAMENTE')
+        } else {
+          this.mostrarAlerta('red', 'error', res.data.message || 'ERROR AL ACTUALIZAR LA CONTRASEÑA')
+        }
+      } catch (error) {
+        this.mostrarAlerta('red', 'error', error.response?.data?.message || 'ERROR AL ACTUALIZAR LA CONTRASEÑA')
+      } finally {
+        this.passwordLoading = false
       }
     },
 
